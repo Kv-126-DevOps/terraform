@@ -1,1 +1,3 @@
-# terraform
+# Terraform
+
+This repository contains infrastructure configuration
