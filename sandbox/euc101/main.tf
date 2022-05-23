@@ -39,6 +39,7 @@ module "rabbitmq_security_group" {
   tags                = local.common_tags
 }
 
+################ Ec2-instance ############
 module "ec2-instance-service" {
   source        = "terraform-aws-modules/ec2-instance/aws"
   version       = "~> 3.0"
