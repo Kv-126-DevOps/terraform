@@ -5,3 +5,11 @@ vpc_id = {
 rabbitmq_create = {
   euc101 = true
 }
+
+subnet_id = {
+  euc101 = "subnet-0ad013438ee134ad6"
+}
+
+route_53_private_zone_name = {
+  euc101 = "private-kv126.pp.ua"
+}
