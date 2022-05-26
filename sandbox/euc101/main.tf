@@ -80,7 +80,7 @@ module "rds" {
   # "Error creating DB Instance: InvalidParameterValue: MasterUsername
   # user cannot be used as it is a reserved word used by the engine"
   db_name  = "postgres"
-  username = "postgres"
+  username = "dbuser"
   port     = 5432
 
   #db_subnet_group_name   = module.vpc.database_subnet_group
