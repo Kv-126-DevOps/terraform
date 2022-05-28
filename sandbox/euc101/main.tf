@@ -31,9 +31,9 @@ locals {
 module "security-group-rds" {
   source = "terraform-aws-modules/security-group/aws"
 
-  name        = "RDS-sg"
-  description = "Security group for PostgreSQL with opened ports  within VPC"
-  vpc_id      = var.vpc_id[local.env_name]
+  name                = "RDS-sg"
+  description         = "PostgreSQL with opened 5432 port within VPC"
+  vpc_id              =  var.vpc_id[local.env_name]
 
   # ingress
   ingress_with_cidr_blocks = [
@@ -45,6 +45,8 @@ module "security-group-rds" {
       cidr_blocks = "172.31.0.0/16"
     },
   ]
+
+  tags                = local.common_tags
 }
 ########## Used modules #####
 
