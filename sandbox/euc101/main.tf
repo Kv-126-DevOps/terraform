@@ -49,7 +49,7 @@ module "security-group-rds" {
   tags                = local.common_tags
 }
 ########## Used modules #####
-
+########## Creating Security group for RDS ##########
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = "~> 4.3.0"
