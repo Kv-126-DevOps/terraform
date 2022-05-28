@@ -42,6 +42,11 @@ variable "route_53_private_zone_name" {
   description = "Envarioment Route 53 zone"
 }
 
+variable "db_pass" {
+  type = string
+  description = "Password for user of DB"
+}
+
 variable "subnet_ids" {
   type        = list(string)
   default     = ["subnet-0ad013438ee134ad6"]
