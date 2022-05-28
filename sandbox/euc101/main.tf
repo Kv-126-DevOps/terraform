@@ -27,34 +27,62 @@ locals {
   }
 }
 
-########## Used modules #####
+##########Security group for RDS##########
+module "security-group-rds" {
+  source = "terraform-aws-modules/security-group/aws"
 
-module "rabbitmq_security_group" {
-  source              = "terraform-aws-modules/security-group/aws//modules/rabbitmq"
-  version             = "~> 4.0"
-  create              = var.rabbitmq_create[local.env_name]
-  vpc_id              = var.vpc_id[local.env_name]
-  name                = "${local.env_name}-${var.env_class}-rabbitmq-security-group"
-  ingress_cidr_blocks = ["0.0.0.0/0"]
+  name                = "RDS-sg"
+  description         = "PostgreSQL with opened 5432 port within VPC"
+  vpc_id              =  var.vpc_id[local.env_name]
+
+  # ingress
+  ingress_with_cidr_blocks = [
+    {
+      from_port   = 5432
+      to_port     = 5432
+      protocol    = "tcp"
+      description = "PostgreSQL access within VPC"
+      cidr_blocks = "172.31.0.0/16"
+    },
+  ]
+
   tags                = local.common_tags
 }
+########## Used modules #####
 
-################ Ec2-instance ############
-module "ec2-instance-service" {
-  source        = "terraform-aws-modules/ec2-instance/aws"
-  version       = "~> 3.0"
-  for_each      = toset(["json-filter", "rabbit-to-db", "rest-api", "frontend", "rabbit-to-slack"])
-  name          = "${each.key}-${local.env_name}-${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
-  ami           = var.ami
-  instance_type = var.instance_type
-  key_name      = "deploy"
-  monitoring    = true
-  #vpc_id        = var.vpc_id[local.env_name]
-  subnet_id = var.subnet_id[local.env_name]
-  tags = merge(
-    {
-      group = "${each.key}"
-    },
-    local.common_tags
-  )
+module "rds" {
+  source  = "terraform-aws-modules/rds/aws"
+  version = "~> 4.3.0"
+  identifier = "postgres-default"
+
+  create_db_option_group    = false
+  create_db_parameter_group = false
+
+  # All available versions: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html#PostgreSQL.Concepts
+  engine               = "postgres"
+  engine_version       = "14.1"
+  family               = "postgres14" # DB parameter group
+  major_engine_version = "14"         # DB option group
+  instance_class       = "db.t4g.micro"
+
+  allocated_storage = 10
+
+  # NOTE: Do NOT use 'user' as the value for 'username' as it throws:
+  # "Error creating DB Instance: InvalidParameterValue: MasterUsername
+  # user cannot be used as it is a reserved word used by the engine"
+  db_name  = "postgres"
+  username = "dbuser"
+  port     =  5432
+  password = var.db_pass
+
+ # db_subnet_group_name   = var.subnet_id[local.env_name]
+  vpc_security_group_ids = [module.security-group-rds.security_group_id]
+
+  maintenance_window      = "Mon:00:00-Mon:03:00"
+  backup_window           = "03:00-06:00"
+  backup_retention_period = 0
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+  create_cloudwatch_log_group     = true
+
+  tags = local.common_tags
 }
