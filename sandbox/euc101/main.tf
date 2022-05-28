@@ -27,6 +27,25 @@ locals {
   }
 }
 
+##########Security group for RDS##########
+module "security-group-rds" {
+  source = "terraform-aws-modules/security-group/aws"
+
+  name        = "RDS-sg"
+  description = "Security group for PostgreSQL with opened ports  within VPC"
+  vpc_id      = var.vpc_id[local.env_name]
+
+  # ingress
+  ingress_with_cidr_blocks = [
+    {
+      from_port   = 5432
+      to_port     = 5432
+      protocol    = "tcp"
+      description = "PostgreSQL access within VPC"
+      cidr_blocks = "172.31.0.0/16"
+    },
+  ]
+}
 ########## Used modules #####
 
 module "rds" {
@@ -43,7 +62,6 @@ module "rds" {
   family               = "postgres14" # DB parameter group
   major_engine_version = "14"         # DB option group
   instance_class       = "db.t4g.micro"
-  subnet_id = var.subnet_id[local.env_name]
 
   allocated_storage = 10
 
@@ -52,14 +70,17 @@ module "rds" {
   # user cannot be used as it is a reserved word used by the engine"
   db_name  = "postgres"
   username = "dbuser"
-  port     = 5432
+  port     =  5432
+  password = "dbpass"
 
-  #db_subnet_group_name   = module.vpc.database_subnet_group
-  vpc_security_group_ids = [var.subnet_id[local.env_name]]
+  db_subnet_group_name   = var.subnet_id[local.env_name]
+  vpc_security_group_ids = [module.security-group-rds.security_group_id]
 
   maintenance_window      = "Mon:00:00-Mon:03:00"
   backup_window           = "03:00-06:00"
   backup_retention_period = 0
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+  create_cloudwatch_log_group     = true
 
   tags = local.common_tags
 }
