@@ -73,9 +73,9 @@ module "rds" {
   db_name  = "postgres"
   username = "dbuser"
   port     =  5432
-  password = "dbpass"
+  password = var.db_pass
 
-  db_subnet_group_name   = var.subnet_id[local.env_name]
+ # db_subnet_group_name   = var.subnet_id[local.env_name]
   vpc_security_group_ids = [module.security-group-rds.security_group_id]
 
   maintenance_window      = "Mon:00:00-Mon:03:00"

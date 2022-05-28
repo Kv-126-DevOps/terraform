@@ -42,3 +42,9 @@ variable "route_53_private_zone_name" {
   description = "Envarioment Route 53 zone"
 
 }
+
+variable "db_pass" {
+  type = string
+  description = "Password for user of DB"
+
+}
