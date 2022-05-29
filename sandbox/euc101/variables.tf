@@ -53,20 +53,11 @@ variable "subnet_ids" {
   description = "Default Subnet"
 }
 
-variable "mq_admin_user" {
+variable "mq_user" {
   type = string
-  default = "mqadmin"
+  default = "mquser"
 }
-
-variable "mq_admin_password" {
-  type = string
-  default = ""
-}
-variable "mq_application_user" {
-  type = string
-  default = "kv126"
-}
-variable "mq_application_password" {
+variable "mq_pass" {
   type = string
   default = ""
 }

@@ -61,7 +61,7 @@ module "security-group-rds" {
 module "rds" {
   source                    = "terraform-aws-modules/rds/aws"
   version                   = "~> 4.3.0"
-  identifier                = "postgres-default"
+  identifier                = "postgres-${local.env_name}-${var.env_class}"
   create_db_option_group    = false
   create_db_parameter_group = false
 
@@ -92,14 +92,14 @@ module "rds" {
 }
 
 resource "aws_mq_broker" "example" {
-  broker_name        = "rabbit-mq-${local.env_name}-${var.env_class}"
+  broker_name        = "rabbit-${local.env_name}-${var.env_class}"
   engine_type        = "RabbitMQ"
   engine_version     = "3.9.16"
   host_instance_type = "mq.t3.micro"
   security_groups    = [module.rabbitmq-security-group.security_group_id]
   user {
-    username = var.mq_application_user
-    password = var.mq_application_password
+    username = var.mq_user
+    password = var.mq_pass
   }
 }
 
@@ -167,25 +167,25 @@ module "aws-mq-service-instance" {
 }
 */
 
-/*
+
 ################ Route53 ############
-module "route53-public-instance-frontend" {
-  source    = "terraform-aws-modules/route53/aws//modules/records"
-  version   = "~> 2.0"
-  zone_name = "kv126.pp.ua"
-  records = [
-    {
-      name = "ui"
-      type = "A"
-      alias = {
-        name    = "MAIN-LB-1389830226.eu-central-1.elb.amazonaws.com"
-        zone_id = "Z0793915QPXVRLWO8FP3"
-      }
-    }
-  ]
-  #depends_on = [module.zones]
-}
-*/
+# module "route53-public-instance-frontend" {
+#   source    = "terraform-aws-modules/route53/aws//modules/records"
+#   version   = "~> 2.0"
+#   zone_name = "kv126.pp.ua"
+#   records = [
+#     {
+#       name = "demo-ui"
+#       type = "A"
+#       alias = {
+#         name    = "MAIN-LB-1389830226.eu-central-1.elb.amazonaws.com"
+#         zone_id = "Z0793915QPXVRLWO8FP3"
+#       }
+#     }
+#   ]
+#   #depends_on = [module.zones]
+# }
+
 
 /*
 module "route53-private-instances" {
