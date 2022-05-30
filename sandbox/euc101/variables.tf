@@ -42,7 +42,12 @@ variable "route_53_private_zone_name" {
   description = "Envarioment Route 53 zone"
 }
 
-variable "db_pass" {
+variable "dbuser" {
+  type = string
+  default = "dbuser"
+}
+
+variable "dbpass" {
   type = string
   description = "Password for user of DB"
 }
@@ -53,13 +58,13 @@ variable "subnet_ids" {
   description = "Default Subnet"
 }
 
-variable "mq_user" {
+variable "mquser" {
   type = string
   default = "mquser"
 }
-variable "mq_pass" {
+variable "mqpass" {
   type = string
-  default = ""
+  description = "Password for user of MQ"
 }
 
 # variable "security_group_enabled" {

@@ -40,7 +40,7 @@ module "rabbitmq-security-group" {
 ##########Security group for RDS##########
 module "security-group-rds" {
   source      = "terraform-aws-modules/security-group/aws"
-  name        = "RDS-sg"
+  name        = "${local.env_name}-${var.env_class}-rds-security-group"
   description = "PostgreSQL with opened 5432 port within VPC"
   vpc_id      = var.vpc_id[local.env_name]
 
@@ -58,7 +58,7 @@ module "security-group-rds" {
 }
 
 ########## Creating Security group for RDS ##########
-module "rds" {
+module "aws_rds" {
   source                    = "terraform-aws-modules/rds/aws"
   version                   = "~> 4.3.0"
   identifier                = "postgres-${local.env_name}-${var.env_class}"
@@ -77,9 +77,9 @@ module "rds" {
   # "Error creating DB Instance: InvalidParameterValue: MasterUsername
   # user cannot be used as it is a reserved word used by the engine"
   db_name  = "postgres"
-  username = "dbuser"
+  username = var.dbuser
   port     = 5432
-  password = var.db_pass
+  password = var.dbpass
 
   # db_subnet_group_name   = var.subnet_id[local.env_name]
   vpc_security_group_ids          = [module.security-group-rds.security_group_id]
@@ -91,23 +91,23 @@ module "rds" {
   tags                            = local.common_tags
 }
 
-resource "aws_mq_broker" "example" {
+resource "aws_mq_broker" "rabbit" {
   broker_name        = "rabbit-${local.env_name}-${var.env_class}"
   engine_type        = "RabbitMQ"
   engine_version     = "3.9.16"
   host_instance_type = "mq.t3.micro"
   security_groups    = [module.rabbitmq-security-group.security_group_id]
   user {
-    username = var.mq_user
-    password = var.mq_pass
+    username = var.mquser
+    password = var.mqpass
   }
 }
 
 module "ec2-instance-service" {
   source        = "terraform-aws-modules/ec2-instance/aws"
   version       = "~> 3.0"
-  for_each      = toset(["json-filter", "rabbit-to-db", "rest-api", "frontend", "rabbit-to-slack"])
-  name          = "${each.key}-${local.env_name}-${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
+  for_each      = toset(["json_filter", "rabbit_to_db", "rest_api", "frontend", "rabbit_to_slack"])
+  name          = "${each.key}_${local.env_name}_${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
   ami           = var.ami
   instance_type = var.instance_type
   key_name      = "deploy"
@@ -120,6 +120,26 @@ module "ec2-instance-service" {
     local.common_tags
   )
 }
+
+# resource "aws_route53_record" "frontend" {
+#   zone_id = "Z0793915QPXVRLWO8FP3"
+#   name    = "demo-ui"
+#   type    = "A"
+#   ttl     = "300"
+#   records = [module.ec2-instance-service["frontend"].public_ip]
+# }
+
+# resource "aws_route53_record" "www" {
+#   zone_id = "Z0793915QPXVRLWO8FP3"
+#   name    = "kv126.pp.ua"
+#   type    = "A"
+
+#   alias {
+#     name                   = aws_elb.main.dns_name
+#     zone_id                = "Z0793915QPXVRLWO8FP3"
+#     evaluate_target_health = true
+#   }
+# }
 
 /*
 module "aws-mq-service-instance" {
@@ -167,25 +187,25 @@ module "aws-mq-service-instance" {
 }
 */
 
-
+/*
 ################ Route53 ############
-# module "route53-public-instance-frontend" {
-#   source    = "terraform-aws-modules/route53/aws//modules/records"
-#   version   = "~> 2.0"
-#   zone_name = "kv126.pp.ua"
-#   records = [
-#     {
-#       name = "demo-ui"
-#       type = "A"
-#       alias = {
-#         name    = "MAIN-LB-1389830226.eu-central-1.elb.amazonaws.com"
-#         zone_id = "Z0793915QPXVRLWO8FP3"
-#       }
-#     }
-#   ]
-#   #depends_on = [module.zones]
-# }
-
+module "route53-public-instance-frontend" {
+  source    = "terraform-aws-modules/route53/aws//modules/records"
+  version   = "~> 2.0"
+  zone_name = "kv126.pp.ua"
+  records = [
+    {
+      name = "demo-ui"
+      type = "A"
+      alias = {
+        name    = "MAIN-LB-1389830226.eu-central-1.elb.amazonaws.com"
+        zone_id = "Z0793915QPXVRLWO8FP3"
+      }
+    }
+  ]
+  #depends_on = [module.zones]
+}
+*/
 
 /*
 module "route53-private-instances" {
