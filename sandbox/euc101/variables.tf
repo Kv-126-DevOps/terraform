@@ -34,22 +34,12 @@ variable "ami" {
 variable "instance_type" {
   type        = string
   description = "Default instance type"
-  default     = "t2.nano"
+  default     = "t3a.nano"
 }
 
 variable "route_53_private_zone_name" {
   type        = map(string)
   description = "Envarioment Route 53 zone"
-}
-
-variable "dbuser" {
-  type = string
-  default = "dbuser"
-}
-
-variable "dbpass" {
-  type = string
-  description = "Password for user of DB"
 }
 
 variable "subnet_ids" {
@@ -58,23 +48,34 @@ variable "subnet_ids" {
   description = "Default Subnet"
 }
 
+variable "target_group_arn" {
+  type        = string
+  description = "ui target group"
+  default     = "arn:aws:elasticloadbalancing:eu-central-1:779414916509:targetgroup/ui/16f43c5cda7c19d6"
+}
+
+variable "security_group_ids" {
+  type        = list(string)
+  description = "Security group ids"
+  default     = ["sg-070712bd20c3ac748", "sg-00aebda5b39acaef6"]
+}
+
+############ users & passwords ###########
+variable "dbuser" {
+  type    = string
+  default = "dbuser"
+}
+
+variable "dbpass" {
+  type        = string
+  description = "Password for user of DB"
+}
+
 variable "mquser" {
-  type = string
+  type    = string
   default = "mquser"
 }
 variable "mqpass" {
-  type = string
+  type        = string
   description = "Password for user of MQ"
 }
-
-# variable "security_group_enabled" {
-#   type        = bool
-#   description = "Whether to create Security Group."
-#   default     = true
-# }
-
-# variable "security_groups" {
-#   type        = list(string)
-#   default     = ["common"]
-#   description = "security groups"
-# }
