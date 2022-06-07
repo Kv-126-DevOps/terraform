@@ -36,8 +36,8 @@ module "rabbitmq-security-group" {
   ingress_cidr_blocks = ["0.0.0.0/0"]
   ingress_with_source_security_group_id = [
     {
-      description              = "HTTPS for common sg"
-      rule                     = "https-443-tcp"
+      description = "HTTPS for common sg"
+      rule = "https-443-tcp"
       source_security_group_id = "sg-00aebda5b39acaef6"
     },
   ]
@@ -110,7 +110,6 @@ module "aws-rds" {
   tags                            = local.common_tags
 }
 
-
 ########### EC2 instances for services ##########
 module "ec2-instance-service" {
   source                 = "terraform-aws-modules/ec2-instance/aws"
@@ -149,7 +148,7 @@ module "security-group-json" {
   tags = local.common_tags
 }
 
-################ EC2 json-filter ############
+############### EC2 json-filter ############
 module "ec2-instance-service-json" {
   source                 = "terraform-aws-modules/ec2-instance/aws"
   version                = "~> 3.0"
@@ -160,7 +159,12 @@ module "ec2-instance-service-json" {
   monitoring             = true
   vpc_security_group_ids = ["sg-070712bd20c3ac748", "sg-00aebda5b39acaef6", module.security-group-json.security_group_id]
   subnet_id              = var.subnet_id[local.env_name]
-  tags                   = local.common_tags
+  tags = merge(
+    {
+      group = "json_filter"
+    },
+    local.common_tags
+  )
 }
 
 ######## Route53 / Target groups / Loadbalancers ###########
