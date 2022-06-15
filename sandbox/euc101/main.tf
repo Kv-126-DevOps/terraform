@@ -56,7 +56,7 @@ resource "aws_ssm_parameter" "mqpass" {
   name        = "mqpass"
   description = "Password for RabitMQ brocker (Amazon MQ service)"
   type        = "SecureString"
-  value       = random_password.mq_broker.result
+  value       = random_password.mq_pass.result
 
   tags = {
     environment = "production"
