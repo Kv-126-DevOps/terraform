@@ -57,6 +57,7 @@ resource "aws_ssm_parameter" "mqpass" {
   description = "Password for RabitMQ brocker (Amazon MQ service)"
   type        = "SecureString"
   value       = random_password.mq_pass.result
+  overwrite   = true
 
   tags = {
     environment = "generated_by_terraform"
@@ -106,6 +107,7 @@ resource "aws_ssm_parameter" "dbpass" {
   description = "Password for RabitMQ brocker (Amazon MQ service)"
   type        = "SecureString"
   value       = random_password.rds_pass.result
+  overwrite   = true
 
   tags = {
     environment = "generated_by_terraform"
