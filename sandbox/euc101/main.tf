@@ -51,7 +51,7 @@ resource "random_password" "mq_pass" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
-########## Save password to SSM ###########
+########## Save RabbitMQ password to SSM ###########
 resource "aws_ssm_parameter" "mqpass" {
   name        = "mqpass"
   description = "Password for RabitMQ brocker (Amazon MQ service)"
@@ -101,10 +101,10 @@ resource "random_password" "rds_pass" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
-########## Save password to SSM ###########
+########## Save RDS password to SSM ###########
 resource "aws_ssm_parameter" "dbpass" {
   name        = "dbpass"
-  description = "Password for RabitMQ brocker (Amazon MQ service)"
+  description = "Password for RDS (Amazon RDS )"
   type        = "SecureString"
   value       = random_password.rds_pass.result
   overwrite   = true
