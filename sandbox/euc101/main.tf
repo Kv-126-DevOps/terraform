@@ -44,6 +44,14 @@ module "rabbitmq-security-group" {
   tags = local.common_tags
 }
 
+########## Rassword Generation ##############1
+resource "generate_password" "mq_broker" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+
 ########## RabbitMQ ###########
 resource "aws_mq_broker" "rabbit" {
   broker_name        = "rabbit-${local.env_name}-${var.env_class}"
@@ -53,7 +61,20 @@ resource "aws_mq_broker" "rabbit" {
   security_groups    = [module.rabbitmq-security-group.security_group_id]
   user {
     username = var.mquser
-    password = var.mqpass
+    password = generate_password.mq_broker.result
+  }
+}
+
+
+########## Save password to SSM ###########
+resource "aws_ssm_parameter" "secret" {
+  name        = "mqpass"
+  description = "Password for RabitMQ brocker (Amazon MQ service)"
+  type        = "SecureString"
+  value       = generate_password.mq_broker.result
+
+  tags = {
+    environment = "production"
   }
 }
 
