@@ -51,7 +51,17 @@ resource "random_password" "mq_pass" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
+########## Save password to SSM ###########
+resource "aws_ssm_parameter" "mqpass" {
+  name        = "mqpass"
+  description = "Password for RabitMQ brocker (Amazon MQ service)"
+  type        = "SecureString"
+  value       = random_password.mq_broker.result
 
+  tags = {
+    environment = "production"
+  }
+}
 ########## RabbitMQ ###########
 resource "aws_mq_broker" "rabbit" {
   broker_name        = "rabbit-${local.env_name}-${var.env_class}"
@@ -64,20 +74,6 @@ resource "aws_mq_broker" "rabbit" {
     password = random_password.mq_pass.result
   }
 }
-
-
-########## Save password to SSM ###########
-resource "aws_ssm_parameter" "secret" {
-  name        = "mqpass"
-  description = "Password for RabitMQ brocker (Amazon MQ service)"
-  type        = "SecureString"
-  value       = random_password.mq_broker.result
-
-  tags = {
-    environment = "production"
-  }
-}
-
 
 ########## Security group for RDS / RDS ##########
 module "security-group-rds" {
@@ -105,7 +101,7 @@ resource "random_password" "rds_pass" {
 }
 
 ########## Save password to SSM ###########
-resource "aws_ssm_parameter" "secret" {
+resource "aws_ssm_parameter" "dbpass" {
   name        = "dbpass"
   description = "Password for RabitMQ brocker (Amazon MQ service)"
   type        = "SecureString"
