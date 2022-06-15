@@ -66,16 +66,16 @@ variable "dbuser" {
   default = "dbuser"
 }
 
-variable "dbpass" {
-  type        = string
-  description = "Password for user of DB"
-}
+//variable "dbpass" {
+//  type        = string
+//  description = "Password for user of DB"
+//}
 
 variable "mquser" {
   type    = string
   default = "mquser"
 }
-variable "mqpass" {
-  type        = string
-  description = "Password for user of MQ"
-}
+//variable "mqpass" {
+//  type        = string
+//  description = "Password for user of MQ"
+//}

@@ -45,7 +45,7 @@ module "rabbitmq-security-group" {
 }
 
 ########## Rassword Generation ##############1
-resource "random_password" "mq_broker" {
+resource "random_password" "mq_pass" {
   length           = 16
   special          = true
   override_special = "!#$%&*()-_=+[]{}<>:?"
@@ -61,7 +61,7 @@ resource "aws_mq_broker" "rabbit" {
   security_groups    = [module.rabbitmq-security-group.security_group_id]
   user {
     username = var.mquser
-    password = random_password.mq_broker.result
+    password = random_password.mq_pass.result
   }
 }
 
@@ -97,7 +97,26 @@ module "security-group-rds" {
   tags = local.common_tags
 }
 
-# ########## RDS ##########
+########## Rassword Generation ##############1
+resource "random_password" "rds_pass" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+########## Save password to SSM ###########
+resource "aws_ssm_parameter" "secret" {
+  name        = "dbpass"
+  description = "Password for RabitMQ brocker (Amazon MQ service)"
+  type        = "SecureString"
+  value       = random_password.rds_pass.result
+
+  tags = {
+    environment = "production"
+  }
+}
+
+########### RDS ##########
 module "aws-rds" {
   source                    = "terraform-aws-modules/rds/aws"
   version                   = "~> 4.3.0"
@@ -119,7 +138,7 @@ module "aws-rds" {
   db_name  = "postgres"
   username = var.dbuser
   port     = 5432
-  password = var.dbpass
+  password = random_password.rds_pass.result
 
   # db_subnet_group_name   = var.subnet_id[local.env_name]
   vpc_security_group_ids          = [module.security-group-rds.security_group_id]
