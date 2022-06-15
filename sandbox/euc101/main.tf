@@ -44,7 +44,7 @@ module "rabbitmq-security-group" {
   tags = local.common_tags
 }
 
-########## Rassword Generation ##############1
+########## Rassword Generation for RabbitMQ ##############1
 resource "random_password" "mq_pass" {
   length           = 16
   special          = true
@@ -59,7 +59,7 @@ resource "aws_ssm_parameter" "mqpass" {
   value       = random_password.mq_pass.result
 
   tags = {
-    environment = "production"
+    environment = "generated_by_terraform"
   }
 }
 ########## RabbitMQ ###########
@@ -93,7 +93,7 @@ module "security-group-rds" {
   tags = local.common_tags
 }
 
-########## Rassword Generation ##############1
+########## Rassword Generation for RDS ##############1
 resource "random_password" "rds_pass" {
   length           = 16
   special          = true
@@ -108,7 +108,7 @@ resource "aws_ssm_parameter" "dbpass" {
   value       = random_password.rds_pass.result
 
   tags = {
-    environment = "production"
+    environment = "generated_by_terraform"
   }
 }
 
