@@ -52,8 +52,8 @@ resource "random_password" "mq_pass" {
 }
 
 ########## Save RabbitMQ password to SSM ###########
-resource "aws_ssm_parameter" "mqpass" {
-  name        = "/sandbox/euc101/mqpass"
+resource "aws_ssm_parameter" "mq_pass" {
+  name        = "/sandbox/euc101/mq_pass"
   description = "Password for RabitMQ brocker (Amazon MQ service)"
   type        = "SecureString"
   value       = random_password.mq_pass.result
@@ -108,8 +108,8 @@ resource "random_password" "rds_pass" {
 }
 
 ########## Save RDS password to SSM ###########
-resource "aws_ssm_parameter" "dbpass" {
-  name        = "/sandbox/euc101/dbpass"
+resource "aws_ssm_parameter" "db_pass" {
+  name        = "/sandbox/euc101/db_pass"
   description = "Password for RDS (Amazon RDS )"
   type        = "SecureString"
   value       = random_password.rds_pass.result
