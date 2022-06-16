@@ -61,20 +61,21 @@ variable "security_group_ids" {
 }
 
 ############ users & passwords ###########
-variable "dbuser" {
-  type    = string
-  default = "dbuser"
-}
+//variable "dbuser" {
+//  type    = string
+//  default = "dbuser"
+//}
 
 //variable "dbpass" {
 //  type        = string
 //  description = "Password for user of DB"
 //}
 
-variable "mquser" {
-  type    = string
-  default = "mquser"
-}
+//variable "mquser" {
+//  type    = string
+//  default = "mquser"
+//}
+
 //variable "mqpass" {
 //  type        = string
 //  description = "Password for user of MQ"

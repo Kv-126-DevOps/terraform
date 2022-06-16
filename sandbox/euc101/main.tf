@@ -44,7 +44,7 @@ module "rabbitmq-security-group" {
   tags = local.common_tags
 }
 
-########## Rassword Generation for RabbitMQ ##############1
+########## Rassword Generation for RabbitMQ ##############
 resource "random_password" "mq_pass" {
   length           = 16
   special          = true
@@ -53,7 +53,7 @@ resource "random_password" "mq_pass" {
 
 ########## Save RabbitMQ password to SSM ###########
 resource "aws_ssm_parameter" "mqpass" {
-  name        = "mqpass"
+  name        = "/sandbox/euc101/mqpass"
   description = "Password for RabitMQ brocker (Amazon MQ service)"
   type        = "SecureString"
   value       = random_password.mq_pass.result
@@ -63,6 +63,12 @@ resource "aws_ssm_parameter" "mqpass" {
     environment = "generated_by_terraform"
   }
 }
+
+########## Get RabbitMQ User from SSM ##############
+data "aws_ssm_parameter" "mq_user" {
+  name = "/sandbox/euc101/mq_user"
+}
+
 ########## RabbitMQ ###########
 resource "aws_mq_broker" "rabbit" {
   broker_name        = "rabbit-${local.env_name}-${var.env_class}"
@@ -71,7 +77,7 @@ resource "aws_mq_broker" "rabbit" {
   host_instance_type = "mq.t3.micro"
   security_groups    = [module.rabbitmq-security-group.security_group_id]
   user {
-    username = var.mquser
+    username = data.aws_ssm_parameter.mq_user.value
     password = random_password.mq_pass.result
   }
 }
@@ -103,7 +109,7 @@ resource "random_password" "rds_pass" {
 
 ########## Save RDS password to SSM ###########
 resource "aws_ssm_parameter" "dbpass" {
-  name        = "dbpass"
+  name        = "/sandbox/euc101/dbpass"
   description = "Password for RDS (Amazon RDS )"
   type        = "SecureString"
   value       = random_password.rds_pass.result
@@ -112,6 +118,11 @@ resource "aws_ssm_parameter" "dbpass" {
   tags = {
     environment = "generated_by_terraform"
   }
+}
+
+########## Get RDS User from SSM ##############
+data "aws_ssm_parameter" "rds_user" {
+  name = "/sandbox/euc101/rds_user"
 }
 
 ########### RDS ##########
@@ -134,7 +145,7 @@ module "aws-rds" {
   # "Error creating DB Instance: InvalidParameterValue: MasterUsername
   # user cannot be used as it is a reserved word used by the engine"
   db_name  = "postgres"
-  username = var.dbuser
+  username = data.aws_ssm_parameter.rds_user.value
   port     = 5432
   password = random_password.rds_pass.result
 
