@@ -110,7 +110,7 @@ resource "random_password" "rds_pass" {
 ########## Save RDS password to SSM ###########
 resource "aws_ssm_parameter" "rds_pass" {
   name        = "/sandbox/euc101/rds_pass"
-  description = "Password for RDS (Amazon RDS )"
+  description = "Password for RDS (Amazon RDS)"
   type        = "SecureString"
   value       = random_password.rds_pass.result
   overwrite   = true
@@ -179,6 +179,19 @@ module "ec2-instance-service" {
   )
 }
 
+########## Save rest-api private_ip to SSM ###########
+resource "aws_ssm_parameter" "rds_pass" {
+  name        = "/sandbox/euc101/rest_api_host"
+  description = "rest-api host"
+  type        = "String"
+  value       = module.ec2-instance-service["rest_api"].private_ip
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
+}
+
 ######### secirity group for json-filter ###########
 module "security-group-json" {
   source      = "terraform-aws-modules/security-group/aws"
@@ -221,4 +234,27 @@ resource "aws_lb_target_group_attachment" "frontend" {
   target_group_arn = var.target_group_arn
   target_id        = module.ec2-instance-service["frontend"].id
   port             = 5000
+}
+
+########## GitHub WebHook ###########
+resource "github_repository" "repo" {
+  name         = "None"
+  description  = "None"
+  homepage_url = "https://github.com/Kv-126-DevOps/"
+
+  private = false
+}
+
+resource "github_repository_webhook" "none" {
+  repository = github_repository.repo.name
+
+  configuration {
+    url          = "http://${module.ec2-instance-service-json.public_ip}:5000/"
+    content_type = "json"
+    insecure_ssl = false
+  }
+
+  active = true
+
+  events = ["issues"]
 }
