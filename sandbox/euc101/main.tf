@@ -180,7 +180,7 @@ module "ec2-instance-service" {
 }
 
 ########## Save rest-api private_ip to SSM ###########
-resource "aws_ssm_parameter" "rds_pass" {
+resource "aws_ssm_parameter" "rest_api_host" {
   name        = "/sandbox/euc101/rest_api_host"
   description = "rest-api host"
   type        = "String"
