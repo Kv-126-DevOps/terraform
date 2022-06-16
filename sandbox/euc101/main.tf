@@ -108,8 +108,8 @@ resource "random_password" "rds_pass" {
 }
 
 ########## Save RDS password to SSM ###########
-resource "aws_ssm_parameter" "db_pass" {
-  name        = "/sandbox/euc101/db_pass"
+resource "aws_ssm_parameter" "rds_pass" {
+  name        = "/sandbox/euc101/rds_pass"
   description = "Password for RDS (Amazon RDS )"
   type        = "SecureString"
   value       = random_password.rds_pass.result
