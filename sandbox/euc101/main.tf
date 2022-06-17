@@ -280,8 +280,6 @@ resource "aws_ssm_parameter" "mq_endpoint" {
   description = "RabitMQ Endpoint (Amazon MQ service)"
   type        = "String"
   value       = substr(aws_mq_broker.rabbit.instances.0.endpoints.0,(length("${aws_mq_broker.rabbit.instances.0.endpoints.0}") - 5),9)
-//  value       = substr(aws_mq_broker.rabbit.instances.0.endpoints.0,1,9)
-//  value       = substr(substr(aws_mq_broker.rabbit.instances.0.endpoints.0,0,length(aws_mq_broker.rabbit.instances.0.endpoints.0 - 5),9)
   overwrite   = true
 
   tags = {
