@@ -220,6 +220,19 @@ resource "github_repository_webhook" "none" {
   events = ["issues"]
 }
 
+########## Save RDS Endpoint to SSM ###########
+resource "aws_ssm_parameter" "rds_endpoint" {
+  name        = "/sandbox/euc101/rds_endpoint"
+  description = "RDS Endpoint"
+  type        = "String"
+  value       = module.aws-rds.db_instance_endpoint
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
+}
+
 ########## Save rest-api private_ip to SSM ###########
 resource "aws_ssm_parameter" "rest_api_host" {
   name        = "/sandbox/euc101/rest_api_host"
