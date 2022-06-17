@@ -222,32 +222,6 @@ resource "github_repository_webhook" "none" {
   events = ["issues"]
 }
 
-########## Save RDS Endpoint to SSM ###########
-resource "aws_ssm_parameter" "rds_endpoint" {
-  name        = "/sandbox/euc101/rds_endpoint"
-  description = "RDS Endpoint"
-  type        = "String"
-  value       = module.aws-rds.db_instance_endpoint
-  overwrite   = true
-
-  tags = {
-    environment = "generated_by_terraform"
-  }
-}
-
-########## Save rest-api private_ip to SSM ###########
-resource "aws_ssm_parameter" "rest_api_host" {
-  name        = "/sandbox/euc101/rest_api_host"
-  description = "rest-api Host"
-  type        = "String"
-  value       = module.ec2-instance-service["rest_api"].private_ip
-  overwrite   = true
-
-  tags = {
-    environment = "generated_by_terraform"
-  }
-}
-
 ########## Save RDS password to SSM ###########
 resource "aws_ssm_parameter" "rds_pass" {
   name        = "/sandbox/euc101/rds_pass"
@@ -267,6 +241,32 @@ resource "aws_ssm_parameter" "mq_pass" {
   description = "Password for RabitMQ brocker (Amazon MQ service)"
   type        = "SecureString"
   value       = random_password.mq_pass.result
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
+}
+
+########## Save RDS Endpoint to SSM ###########
+resource "aws_ssm_parameter" "rds_endpoint" {
+  name        = "/sandbox/euc101/rds_endpoint"
+  description = "RDS Endpoint"
+  type        = "String"
+  value       = module.aws-rds.db_instance_endpoint
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
+}
+
+########## Save rest-api private_ip to SSM ###########
+resource "aws_ssm_parameter" "rest_api_host" {
+  name        = "/sandbox/euc101/rest_api_host"
+  description = "rest-api Host"
+  type        = "String"
+  value       = module.ec2-instance-service["rest_api"].private_ip
   overwrite   = true
 
   tags = {
