@@ -24,6 +24,30 @@ locals {
   }
 }
 
+########## Rassword Generation for RabbitMQ ##############
+resource "random_password" "mq_pass" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+########## Rassword Generation for RDS ##############1
+resource "random_password" "rds_pass" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+########## Get RabbitMQ User from SSM ##############
+data "aws_ssm_parameter" "mq_user" {
+  name = "/sandbox/euc101/mq_user"
+}
+
+########## Get RDS User from SSM ##############
+data "aws_ssm_parameter" "rds_user" {
+  name = "/sandbox/euc101/rds_user"
+}
+
 ########## Used modules #####
 
 ####### Security group for RabbitMQ #########
@@ -42,31 +66,6 @@ module "rabbitmq-security-group" {
     },
   ]
   tags = local.common_tags
-}
-
-########## Rassword Generation for RabbitMQ ##############
-resource "random_password" "mq_pass" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-########## Save RabbitMQ password to SSM ###########
-resource "aws_ssm_parameter" "mq_pass" {
-  name        = "/sandbox/euc101/mq_pass"
-  description = "Password for RabitMQ brocker (Amazon MQ service)"
-  type        = "SecureString"
-  value       = random_password.mq_pass.result
-  overwrite   = true
-
-  tags = {
-    environment = "generated_by_terraform"
-  }
-}
-
-########## Get RabbitMQ User from SSM ##############
-data "aws_ssm_parameter" "mq_user" {
-  name = "/sandbox/euc101/mq_user"
 }
 
 ########## RabbitMQ ###########
@@ -98,31 +97,6 @@ module "security-group-rds" {
     },
   ]
   tags = local.common_tags
-}
-
-########## Rassword Generation for RDS ##############1
-resource "random_password" "rds_pass" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-########## Save RDS password to SSM ###########
-resource "aws_ssm_parameter" "rds_pass" {
-  name        = "/sandbox/euc101/rds_pass"
-  description = "Password for RDS (Amazon RDS)"
-  type        = "SecureString"
-  value       = random_password.rds_pass.result
-  overwrite   = true
-
-  tags = {
-    environment = "generated_by_terraform"
-  }
-}
-
-########## Get RDS User from SSM ##############
-data "aws_ssm_parameter" "rds_user" {
-  name = "/sandbox/euc101/rds_user"
 }
 
 ########### RDS ##########
@@ -177,19 +151,6 @@ module "ec2-instance-service" {
     },
     local.common_tags
   )
-}
-
-########## Save rest-api private_ip to SSM ###########
-resource "aws_ssm_parameter" "rest_api_host" {
-  name        = "/sandbox/euc101/rest_api_host"
-  description = "rest-api host"
-  type        = "String"
-  value       = module.ec2-instance-service["rest_api"].private_ip
-  overwrite   = true
-
-  tags = {
-    environment = "generated_by_terraform"
-  }
 }
 
 ######### secirity group for json-filter ###########
@@ -257,4 +218,43 @@ resource "github_repository_webhook" "none" {
   active = true
 
   events = ["issues"]
+}
+
+########## Save rest-api private_ip to SSM ###########
+resource "aws_ssm_parameter" "rest_api_host" {
+  name        = "/sandbox/euc101/rest_api_host"
+  description = "rest-api host"
+  type        = "String"
+  value       = module.ec2-instance-service["rest_api"].private_ip
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
+}
+
+########## Save RDS password to SSM ###########
+resource "aws_ssm_parameter" "rds_pass" {
+  name        = "/sandbox/euc101/rds_pass"
+  description = "Password for RDS (Amazon RDS)"
+  type        = "SecureString"
+  value       = random_password.rds_pass.result
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
+}
+
+########## Save RabbitMQ password to SSM ###########
+resource "aws_ssm_parameter" "mq_pass" {
+  name        = "/sandbox/euc101/mq_pass"
+  description = "Password for RabitMQ brocker (Amazon MQ service)"
+  type        = "SecureString"
+  value       = random_password.mq_pass.result
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
 }
