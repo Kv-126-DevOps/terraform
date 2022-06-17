@@ -3,6 +3,10 @@ provider "aws" {
   region = var.region
 }
 
+provider "github" {
+  owner = "Kv-126-DevOps"
+}
+
 ########## Configure S3 backend #########
 terraform {
   backend "s3" {
@@ -202,8 +206,6 @@ resource "github_repository" "repo" {
   name         = "None"
   description  = "None"
   homepage_url = "https://github.com/Kv-126-DevOps/"
-
-  private = false
 }
 
 resource "github_repository_webhook" "none" {
@@ -236,7 +238,7 @@ resource "aws_ssm_parameter" "rds_endpoint" {
 ########## Save rest-api private_ip to SSM ###########
 resource "aws_ssm_parameter" "rest_api_host" {
   name        = "/sandbox/euc101/rest_api_host"
-  description = "rest-api host"
+  description = "rest-api Host"
   type        = "String"
   value       = module.ec2-instance-service["rest_api"].private_ip
   overwrite   = true
@@ -265,6 +267,20 @@ resource "aws_ssm_parameter" "mq_pass" {
   description = "Password for RabitMQ brocker (Amazon MQ service)"
   type        = "SecureString"
   value       = random_password.mq_pass.result
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
+}
+
+########## Save Amazon MQ SSL Endpoint to SSM ###########
+resource "aws_ssm_parameter" "mq_endpoint" {
+  name        = "/sandbox/euc101/mq_endpoint"
+  description = "RabitMQ Endpoint (Amazon MQ service)"
+  type        = "String"
+//  value       = aws_mq_broker.rabbit.instances.0.endpoints.0
+  value       = substr(substr(${aws_mq_broker.rabbit.instances.0.endpoints.0},0,length(${aws_mq_broker.rabbit.instances.0.endpoints.0} - 5),9)
   overwrite   = true
 
   tags = {
