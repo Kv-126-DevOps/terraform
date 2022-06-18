@@ -3,10 +3,6 @@ provider "aws" {
   region = var.region
 }
 
-provider "github" {
-  owner = "Kv-126-DevOps"
-}
-
 ########## Configure S3 backend #########
 terraform {
   backend "s3" {
@@ -201,15 +197,19 @@ resource "aws_lb_target_group_attachment" "frontend" {
   port             = 5000
 }
 
-########## GitHub WebHook ###########
-resource "github_repository" "repo" {
-  name         = "None"
-  description  = "None"
-  homepage_url = "https://github.com/Kv-126-DevOps/"
+########## Get GIT_TOKEN from SSM ##############
+data "aws_ssm_parameter" "git_token" {
+  name = "git_token"
 }
 
+provider "github" {
+  token = data.aws_ssm_parameter.git_token.value
+  owner = "Kv-126-DevOps"
+}
+
+########## GitHub WebHook ###########
 resource "github_repository_webhook" "none" {
-  repository = github_repository.repo.name
+  repository = "None"
 
   configuration {
     url          = "http://${module.ec2-instance-service-json.public_ip}:5000/"
@@ -219,7 +219,15 @@ resource "github_repository_webhook" "none" {
 
   active = true
 
-  events = ["issues"]
+  events = [
+    "issues",
+    "commit_comment",
+    "check_run",
+    "check_suite",
+    "create",
+    "delete",
+    "label"
+    ]
 }
 
 ########## Save RDS password to SSM ###########
@@ -253,7 +261,7 @@ resource "aws_ssm_parameter" "rds_endpoint" {
   name        = "/sandbox/euc101/rds_endpoint"
   description = "RDS Endpoint"
   type        = "String"
-  value       = module.aws-rds.db_instance_endpoint
+  value       = split(":",module.aws-rds.db_instance_endpoint)[0]
   overwrite   = true
 
   tags = {
