@@ -15,9 +15,9 @@ rabbitmq_create = {
 }
 
 rds_create = {
-  "euc101" = true
+  euc101 = true
 }
 
 ec2_instances_create = {
-  "euc101" = true
+  euc101 = true
 }
