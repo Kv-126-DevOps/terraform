@@ -3,6 +3,12 @@ provider "aws" {
   region = var.region
 }
 
+############## GitHub Provider ############
+provider "github" {
+  token = data.aws_ssm_parameter.git_token.value
+  owner = "Kv-126-DevOps"
+}
+
 ########## Configure S3 backend #########
 terraform {
   backend "s3" {
@@ -38,14 +44,22 @@ resource "random_password" "rds_pass" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
-########## Get RabbitMQ User from SSM ##############
-data "aws_ssm_parameter" "mq_user" {
-  name = "/sandbox/euc101/mq_user"
+
+########## Get Parameters from SSM ##############
+
+########## GIT_TOKEN ##############
+data "aws_ssm_parameter" "git_token" {
+  name = "git_token"
 }
 
-########## Get RDS User from SSM ##############
+########## RabbitMQ User ##############
+data "aws_ssm_parameter" "mq_user" {
+  name = "/${local.env_name}/${var.env_class}/mq_user"
+}
+
+########## RDS User ##############
 data "aws_ssm_parameter" "rds_user" {
-  name = "/sandbox/euc101/rds_user"
+  name = "/${local.env_name}/${var.env_class}/rds_user"
 }
 
 ########## Used modules #####
@@ -197,16 +211,6 @@ resource "aws_lb_target_group_attachment" "frontend" {
   port             = 5000
 }
 
-########## Get GIT_TOKEN from SSM ##############
-data "aws_ssm_parameter" "git_token" {
-  name = "git_token"
-}
-
-provider "github" {
-  token = data.aws_ssm_parameter.git_token.value
-  owner = "Kv-126-DevOps"
-}
-
 ########## GitHub WebHook ###########
 resource "github_repository_webhook" "none" {
   repository = "None"
@@ -232,7 +236,7 @@ resource "github_repository_webhook" "none" {
 
 ########## Save RDS password to SSM ###########
 resource "aws_ssm_parameter" "rds_pass" {
-  name        = "/sandbox/euc101/rds_pass"
+  name        = "/${local.env_name}/${var.env_class}/rds_pass"
   description = "Password for RDS (Amazon RDS)"
   type        = "SecureString"
   value       = random_password.rds_pass.result
@@ -245,7 +249,7 @@ resource "aws_ssm_parameter" "rds_pass" {
 
 ########## Save RabbitMQ password to SSM ###########
 resource "aws_ssm_parameter" "mq_pass" {
-  name        = "/sandbox/euc101/mq_pass"
+  name        = "/${local.env_name}/${var.env_class}/mq_pass"
   description = "Password for RabitMQ brocker (Amazon MQ service)"
   type        = "SecureString"
   value       = random_password.mq_pass.result
@@ -258,7 +262,7 @@ resource "aws_ssm_parameter" "mq_pass" {
 
 ########## Save RDS Endpoint to SSM ###########
 resource "aws_ssm_parameter" "rds_endpoint" {
-  name        = "/sandbox/euc101/rds_endpoint"
+  name        = "/${local.env_name}/${var.env_class}/rds_endpoint"
   description = "RDS Endpoint"
   type        = "String"
   value       = split(":",module.aws-rds.db_instance_endpoint)[0]
@@ -271,7 +275,7 @@ resource "aws_ssm_parameter" "rds_endpoint" {
 
 ########## Save rest-api private_ip to SSM ###########
 resource "aws_ssm_parameter" "rest_api_host" {
-  name        = "/sandbox/euc101/rest_api_host"
+  name        = "/${local.env_name}/${var.env_class}/rest_api_host"
   description = "rest-api Host"
   type        = "String"
   value       = module.ec2-instance-service["rest_api"].private_ip
@@ -284,7 +288,7 @@ resource "aws_ssm_parameter" "rest_api_host" {
 
 ########## Save Amazon MQ SSL Endpoint to SSM ###########
 resource "aws_ssm_parameter" "mq_endpoint" {
-  name        = "/sandbox/euc101/mq_endpoint"
+  name        = "/${local.env_name}/${var.env_class}/mq_endpoint"
   description = "RabitMQ Endpoint (Amazon MQ service)"
   type        = "String"
 //  value       = substr(aws_mq_broker.rabbit.instances.0.endpoints.0,8,(length("${aws_mq_broker.rabbit.instances.0.endpoints.0}") - 5))
