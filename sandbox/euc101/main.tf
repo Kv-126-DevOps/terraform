@@ -3,7 +3,7 @@ provider "aws" {
   region = var.region
 }
 
-############## GitHub Provider ############
+########## GitHub Provider ##########
 provider "github" {
   token = data.aws_ssm_parameter.git_token.value
   owner = "Kv-126-DevOps"
@@ -30,7 +30,7 @@ locals {
   }
 }
 
-########## Get Parameters from SSM ##########
+############# Get Parameters from Amazon SSM #############
 
 ########## GIT_TOKEN ##########
 data "aws_ssm_parameter" "git_token" {
@@ -94,8 +94,8 @@ resource "aws_mq_broker" "rabbit" {
   host_instance_type = "mq.t3.micro"
   security_groups    = [module.rabbitmq-security-group.security_group_id]
   user {
-    username = var.mquser
-    password = var.mqpass
+    username = data.aws_ssm_parameter.mq_user.value
+    password = random_password.mq_pass.result
   }
 }
 
@@ -140,9 +140,9 @@ module "aws-rds" {
   # "Error creating DB Instance: InvalidParameterValue: MasterUsername
   # user cannot be used as it is a reserved word used by the engine"
   db_name  = "postgres"
-  username = var.dbuser
+  username = data.aws_ssm_parameter.rds_user.value
   port     = 5432
-  password = var.dbpass
+  password = random_password.rds_pass.result
 
   # db_subnet_group_name   = var.subnet_id[local.env_name]
   vpc_security_group_ids          = [module.security-group-rds.security_group_id]
@@ -220,4 +220,95 @@ resource "aws_lb_target_group_attachment" "frontend" {
   target_group_arn = var.target_group_arn
   target_id        = module.ec2-instance-service["frontend"].id
   port             = 5000
+}
+
+########## Create GitHub WebHook ##########
+resource "github_repository_webhook" "none" {
+  repository = "None"
+
+  configuration {
+    url          = "http://${module.ec2-instance-service-json.public_ip}:5000/"
+    content_type = "json"
+    insecure_ssl = false
+  }
+
+  active = true
+
+  events = [
+    "issues",
+    "commit_comment",
+    "check_run",
+    "check_suite",
+    "create",
+    "delete",
+    "label"
+    ]
+}
+
+############# Save Parameters to Amazon SSM #############
+
+########## Save RDS password ##########
+resource "aws_ssm_parameter" "rds_pass" {
+  name        = "/${var.env_class}/${local.env_name}/rds_pass"
+  description = "Password for RDS (Amazon RDS)"
+  type        = "SecureString"
+  value       = random_password.rds_pass.result
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
+}
+
+########## Save RabbitMQ password ##########
+resource "aws_ssm_parameter" "mq_pass" {
+  name        = "/${var.env_class}/${local.env_name}/mq_pass"
+  description = "Password for RabitMQ brocker (Amazon MQ service)"
+  type        = "SecureString"
+  value       = random_password.mq_pass.result
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
+}
+
+########## Save RDS Endpoint ##########
+resource "aws_ssm_parameter" "rds_endpoint" {
+  name        = "/${var.env_class}/${local.env_name}/rds_endpoint"
+  description = "RDS Endpoint"
+  type        = "String"
+  value       = split(":",module.aws-rds.db_instance_endpoint)[0]
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
+}
+
+########## Save rest-api private_ip ##########
+resource "aws_ssm_parameter" "rest_api_host" {
+  name        = "/${var.env_class}/${local.env_name}/rest_api_host"
+  description = "rest-api Host"
+  type        = "String"
+  value       = module.ec2-instance-service["rest_api"].private_ip
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
+}
+
+########## Save Amazon MQ SSL Endpoint ##########
+resource "aws_ssm_parameter" "mq_endpoint" {
+  name        = "/${var.env_class}/${local.env_name}/mq_endpoint"
+  description = "RabitMQ Endpoint (Amazon MQ service)"
+  type        = "String"
+//  value       = substr(aws_mq_broker.rabbit.instances.0.endpoints.0,8,(length("${aws_mq_broker.rabbit.instances.0.endpoints.0}") - 5))
+  value       = split(":",split("//", aws_mq_broker.rabbit.instances.0.endpoints.0)[1])[0]
+  overwrite   = true
+
+  tags = {
+    environment = "generated_by_terraform"
+  }
 }

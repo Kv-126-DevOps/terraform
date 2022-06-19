@@ -92,7 +92,7 @@ variable "random_password_length" {
   default     = 16
 }
 
-
+/*
 variable "dbuser" {
   type    = string
   default = "dbuser"
@@ -111,3 +111,4 @@ variable "mqpass" {
   type        = string
   description = "Password for user of MQ"
 }
+*/
