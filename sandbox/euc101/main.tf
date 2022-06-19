@@ -30,26 +30,11 @@ locals {
   }
 }
 
-########## Rassword Generation for RabbitMQ ##############
-resource "random_password" "mq_pass" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-########## Rassword Generation for RDS ##############1
-resource "random_password" "rds_pass" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-
 ########## Get Parameters from SSM ##############
 
 ########## GIT_TOKEN ##############
 data "aws_ssm_parameter" "git_token" {
-  name = "git_token"
+  name = "/${var.env_class}/${local.env_name}/git_token"
 }
 
 ########## RabbitMQ User ##############
@@ -74,8 +59,8 @@ module "rabbitmq-security-group" {
   ingress_cidr_blocks = ["0.0.0.0/0"]
   ingress_with_source_security_group_id = [
     {
-      description = "HTTPS for common sg"
-      rule = "https-443-tcp"
+      description              = "HTTPS for common sg"
+      rule                     = "https-443-tcp"
       source_security_group_id = "sg-00aebda5b39acaef6"
     },
   ]
@@ -84,20 +69,23 @@ module "rabbitmq-security-group" {
 
 ########## RabbitMQ ###########
 resource "aws_mq_broker" "rabbit" {
+  count              = var.rabbitmq_create[local.env_name] ? 1 : 0
   broker_name        = "rabbit-${local.env_name}-${var.env_class}"
   engine_type        = "RabbitMQ"
   engine_version     = "3.9.16"
   host_instance_type = "mq.t3.micro"
   security_groups    = [module.rabbitmq-security-group.security_group_id]
   user {
-    username = data.aws_ssm_parameter.mq_user.value
-    password = random_password.mq_pass.result
+    username = var.mquser
+    password = var.mqpass
   }
 }
+
 
 ########## Security group for RDS / RDS ##########
 module "security-group-rds" {
   source      = "terraform-aws-modules/security-group/aws"
+  create      = var.rds_create[local.env_name]
   name        = "${local.env_name}-${var.env_class}-rds-security-group"
   description = "PostgreSQL with opened 5432 port within VPC"
   vpc_id      = var.vpc_id[local.env_name]
@@ -113,10 +101,11 @@ module "security-group-rds" {
   tags = local.common_tags
 }
 
-########### RDS ##########
+# ########## RDS ##########
 module "aws-rds" {
   source                    = "terraform-aws-modules/rds/aws"
   version                   = "~> 4.3.0"
+  create                    = var.rds_create[local.env_name]
   identifier                = "postgres-${local.env_name}-${var.env_class}"
   create_db_option_group    = false
   create_db_parameter_group = false
@@ -133,9 +122,9 @@ module "aws-rds" {
   # "Error creating DB Instance: InvalidParameterValue: MasterUsername
   # user cannot be used as it is a reserved word used by the engine"
   db_name  = "postgres"
-  username = data.aws_ssm_parameter.rds_user.value
+  username = var.dbuser
   port     = 5432
-  password = random_password.rds_pass.result
+  password = var.dbpass
 
   # db_subnet_group_name   = var.subnet_id[local.env_name]
   vpc_security_group_ids          = [module.security-group-rds.security_group_id]
@@ -151,6 +140,7 @@ module "aws-rds" {
 module "ec2-instance-service" {
   source                 = "terraform-aws-modules/ec2-instance/aws"
   version                = "~> 3.0"
+  create                 = var.ec2_instances_create[local.env_name]
   for_each               = toset(["rabbit_to_db", "rest_api", "frontend", "rabbit_to_slack"])
   name                   = "${each.key}_${local.env_name}_${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
   ami                    = var.ami
@@ -170,6 +160,7 @@ module "ec2-instance-service" {
 ######### secirity group for json-filter ###########
 module "security-group-json" {
   source      = "terraform-aws-modules/security-group/aws"
+  create      = var.ec2_instances_create[local.env_name]
   name        = "${local.env_name}-${var.env_class}-json_filter-security-group"
   description = "Open 5000 port for webhooks"
   vpc_id      = var.vpc_id[local.env_name]
@@ -189,6 +180,7 @@ module "security-group-json" {
 module "ec2-instance-service-json" {
   source                 = "terraform-aws-modules/ec2-instance/aws"
   version                = "~> 3.0"
+  create                 = var.ec2_instances_create[local.env_name]
   name                   = "json_filter_${local.env_name}_${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
   ami                    = var.ami
   instance_type          = var.instance_type
@@ -206,96 +198,8 @@ module "ec2-instance-service-json" {
 
 ######## Route53 / Target groups / Loadbalancers ###########
 resource "aws_lb_target_group_attachment" "frontend" {
+  count            = var.ec2_instances_create[local.env_name] ? 1 : 0
   target_group_arn = var.target_group_arn
   target_id        = module.ec2-instance-service["frontend"].id
   port             = 5000
-}
-
-########## GitHub WebHook ###########
-resource "github_repository_webhook" "none" {
-  repository = "None"
-
-  configuration {
-    url          = "http://${module.ec2-instance-service-json.public_ip}:5000/"
-    content_type = "json"
-    insecure_ssl = false
-  }
-
-  active = true
-
-  events = [
-    "issues",
-    "commit_comment",
-    "check_run",
-    "check_suite",
-    "create",
-    "delete",
-    "label"
-    ]
-}
-
-########## Save RDS password to SSM ###########
-resource "aws_ssm_parameter" "rds_pass" {
-  name        = "/${var.env_class}/${local.env_name}/rds_pass"
-  description = "Password for RDS (Amazon RDS)"
-  type        = "SecureString"
-  value       = random_password.rds_pass.result
-  overwrite   = true
-
-  tags = {
-    environment = "generated_by_terraform"
-  }
-}
-
-########## Save RabbitMQ password to SSM ###########
-resource "aws_ssm_parameter" "mq_pass" {
-  name        = "/${var.env_class}/${local.env_name}/mq_pass"
-  description = "Password for RabitMQ brocker (Amazon MQ service)"
-  type        = "SecureString"
-  value       = random_password.mq_pass.result
-  overwrite   = true
-
-  tags = {
-    environment = "generated_by_terraform"
-  }
-}
-
-########## Save RDS Endpoint to SSM ###########
-resource "aws_ssm_parameter" "rds_endpoint" {
-  name        = "/${var.env_class}/${local.env_name}/rds_endpoint"
-  description = "RDS Endpoint"
-  type        = "String"
-  value       = split(":",module.aws-rds.db_instance_endpoint)[0]
-  overwrite   = true
-
-  tags = {
-    environment = "generated_by_terraform"
-  }
-}
-
-########## Save rest-api private_ip to SSM ###########
-resource "aws_ssm_parameter" "rest_api_host" {
-  name        = "/${var.env_class}/${local.env_name}/rest_api_host"
-  description = "rest-api Host"
-  type        = "String"
-  value       = module.ec2-instance-service["rest_api"].private_ip
-  overwrite   = true
-
-  tags = {
-    environment = "generated_by_terraform"
-  }
-}
-
-########## Save Amazon MQ SSL Endpoint to SSM ###########
-resource "aws_ssm_parameter" "mq_endpoint" {
-  name        = "/${var.env_class}/${local.env_name}/mq_endpoint"
-  description = "RabitMQ Endpoint (Amazon MQ service)"
-  type        = "String"
-//  value       = substr(aws_mq_broker.rabbit.instances.0.endpoints.0,8,(length("${aws_mq_broker.rabbit.instances.0.endpoints.0}") - 5))
-  value       = split(":",split("//", aws_mq_broker.rabbit.instances.0.endpoints.0)[1])[0]
-  overwrite   = true
-
-  tags = {
-    environment = "generated_by_terraform"
-  }
 }
