@@ -36,8 +36,8 @@ module "rabbitmq-security-group" {
   ingress_cidr_blocks = ["0.0.0.0/0"]
   ingress_with_source_security_group_id = [
     {
-      description = "HTTPS for common sg"
-      rule = "https-443-tcp"
+      description              = "HTTPS for common sg"
+      rule                     = "https-443-tcp"
       source_security_group_id = "sg-00aebda5b39acaef6"
     },
   ]
@@ -46,6 +46,7 @@ module "rabbitmq-security-group" {
 
 ########## RabbitMQ ###########
 resource "aws_mq_broker" "rabbit" {
+  count              = var.rabbitmq_create[local.env_name] ? 1 : 0
   broker_name        = "rabbit-${local.env_name}-${var.env_class}"
   engine_type        = "RabbitMQ"
   engine_version     = "3.9.16"
@@ -61,6 +62,7 @@ resource "aws_mq_broker" "rabbit" {
 ########## Security group for RDS / RDS ##########
 module "security-group-rds" {
   source      = "terraform-aws-modules/security-group/aws"
+  create      = var.rds_create[local.env_name]
   name        = "${local.env_name}-${var.env_class}-rds-security-group"
   description = "PostgreSQL with opened 5432 port within VPC"
   vpc_id      = var.vpc_id[local.env_name]
@@ -80,6 +82,7 @@ module "security-group-rds" {
 module "aws-rds" {
   source                    = "terraform-aws-modules/rds/aws"
   version                   = "~> 4.3.0"
+  create                    = var.rds_create[local.env_name]
   identifier                = "postgres-${local.env_name}-${var.env_class}"
   create_db_option_group    = false
   create_db_parameter_group = false
@@ -114,6 +117,7 @@ module "aws-rds" {
 module "ec2-instance-service" {
   source                 = "terraform-aws-modules/ec2-instance/aws"
   version                = "~> 3.0"
+  create                 = var.ec2_instances_create[local.env_name]
   for_each               = toset(["rabbit_to_db", "rest_api", "frontend", "rabbit_to_slack"])
   name                   = "${each.key}_${local.env_name}_${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
   ami                    = var.ami
@@ -133,6 +137,7 @@ module "ec2-instance-service" {
 ######### secirity group for json-filter ###########
 module "security-group-json" {
   source      = "terraform-aws-modules/security-group/aws"
+  create      = var.ec2_instances_create[local.env_name]
   name        = "${local.env_name}-${var.env_class}-json_filter-security-group"
   description = "Open 5000 port for webhooks"
   vpc_id      = var.vpc_id[local.env_name]
@@ -152,6 +157,7 @@ module "security-group-json" {
 module "ec2-instance-service-json" {
   source                 = "terraform-aws-modules/ec2-instance/aws"
   version                = "~> 3.0"
+  create                 = var.ec2_instances_create[local.env_name]
   name                   = "json_filter_${local.env_name}_${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
   ami                    = var.ami
   instance_type          = var.instance_type
@@ -169,6 +175,7 @@ module "ec2-instance-service-json" {
 
 ######## Route53 / Target groups / Loadbalancers ###########
 resource "aws_lb_target_group_attachment" "frontend" {
+  count            = var.ec2_instances_create[local.env_name] ? 1 : 0
   target_group_arn = var.target_group_arn
   target_id        = module.ec2-instance-service["frontend"].id
   port             = 5000
