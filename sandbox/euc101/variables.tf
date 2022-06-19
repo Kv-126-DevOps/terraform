@@ -10,11 +10,7 @@ variable "env_class" {
   default     = "sandbox"
 }
 
-variable "rabbitmq_create" {
-  type        = map(bool)
-  description = "Whether to create rabbitmq resources or not"
-}
-
+#################################################
 variable "vpc_id" {
   type        = map(string)
   description = "Envariroment VPC"
@@ -60,7 +56,43 @@ variable "security_group_ids" {
   default     = ["sg-070712bd20c3ac748", "sg-00aebda5b39acaef6"]
 }
 
+####################################################3
+variable "rabbitmq_create" {
+  type        = map(bool)
+  description = "Whether to create rabbitmq resources or not"
+}
+
+variable "rds_create" {
+  type        = map(bool)
+  description = "Whether to create rds resources or not"
+}
+
+variable "ec2_instances_create" {
+  type        = map(bool)
+  description = "Whether to create EC2s resources or not"
+}
+
+variable "rds_create" {
+  type        = bool
+  default     = true
+  description = "Whether to generate RDS Password or not"
+}
+
+variable "rabbitmq_create" {
+  type        = bool
+  default     = true
+  description = "Whether to generate RabbitMQ Password or not"
+}
+
 ############ users & passwords ###########
+
+variable "random_password_length" {
+  description = "Length of random password to create"
+  type        = number
+  default     = 16
+}
+
+
 variable "dbuser" {
   type    = string
   default = "dbuser"

@@ -30,22 +30,40 @@ locals {
   }
 }
 
-########## Get Parameters from SSM ##############
+########## Get Parameters from SSM ##########
 
-########## GIT_TOKEN ##############
+########## GIT_TOKEN ##########
 data "aws_ssm_parameter" "git_token" {
   name = "/${var.env_class}/${local.env_name}/git_token"
 }
 
-########## RabbitMQ User ##############
+########## RabbitMQ User ##########
 data "aws_ssm_parameter" "mq_user" {
   name = "/${var.env_class}/${local.env_name}/mq_user"
 }
 
-########## RDS User ##############
+########## RDS User ##########
 data "aws_ssm_parameter" "rds_user" {
   name = "/${var.env_class}/${local.env_name}/rds_user"
 }
+
+
+########## Rassword Generation for RabbitMQ ##########
+resource "random_password" "mq_pass" {
+  count            = var.rabbitmq_create ? 1 : 0
+  length           = var.random_password_length
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+########## Rassword Generation for RDS ##########
+resource "random_password" "rds_pass" {
+  count            = var.rds_create ? 1 : 0
+  length           = var.random_password_length
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
 
 ########## Used modules #####
 
