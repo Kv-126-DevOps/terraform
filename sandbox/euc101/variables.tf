@@ -56,6 +56,12 @@ variable "security_group_ids" {
   default     = ["sg-070712bd20c3ac748", "sg-00aebda5b39acaef6"]
 }
 
+variable "rds_cloudwatch_exports" {
+  type        = list(string)
+  description = "Cloudwatch logs exports for RDS"
+  default     = ["postgresql", "upgrade"]
+}
+
 ####################################################3
 variable "rabbitmq_create" {
   type        = map(bool)
@@ -70,18 +76,6 @@ variable "rds_create" {
 variable "ec2_instances_create" {
   type        = map(bool)
   description = "Whether to create EC2s resources or not"
-}
-
-variable "rds_create" {
-  type        = bool
-  default     = true
-  description = "Whether to generate RDS Password or not"
-}
-
-variable "rabbitmq_create" {
-  type        = bool
-  default     = true
-  description = "Whether to generate RabbitMQ Password or not"
 }
 
 ############ users & passwords ###########
