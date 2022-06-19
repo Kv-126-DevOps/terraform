@@ -6,6 +6,14 @@ rabbitmq_create = {
   euc101 = true
 }
 
+rds_create = {
+  euc101 = true
+}
+
+ec2_instances_create = {
+  euc101 = true
+}
+
 subnet_id = {
   euc101 = "subnet-0ad013438ee134ad6"
 }
