@@ -64,9 +64,6 @@ resource "random_password" "rds_pass" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
-data "aws_cloudwatch_log_group" "example" {
-  name = "/aws/rds/instance/postgres-${local.env_name}-${var.env_class}"
-}
 
 ########## Used modules #####
 
@@ -101,6 +98,7 @@ resource "aws_mq_broker" "rabbit" {
     password = random_password.mq_pass.result
   }
 }
+
 
 ########## Security group for RDS / RDS ##########
 module "security-group-rds" {
@@ -151,7 +149,7 @@ module "aws-rds" {
   maintenance_window              = "Mon:00:00-Mon:03:00"
   backup_window                   = "03:00-06:00"
   backup_retention_period         = 0
-  enabled_cloudwatch_logs_exports = var.rds_cloudwatch_exports
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
   create_cloudwatch_log_group     = true
   tags                            = local.common_tags
 }
