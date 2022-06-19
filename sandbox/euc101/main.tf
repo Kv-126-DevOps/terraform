@@ -82,7 +82,7 @@ module "security-group-rds" {
 module "aws-rds" {
   source                    = "terraform-aws-modules/rds/aws"
   version                   = "~> 4.3.0"
-  create                    = var.rds_create[local.env_name]
+  create_db_instance        = var.rds_create[local.env_name]
   identifier                = "postgres-${local.env_name}-${var.env_class}"
   create_db_option_group    = false
   create_db_parameter_group = false
