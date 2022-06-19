@@ -68,15 +68,29 @@ variable "rabbitmq_create" {
   description = "Whether to create rabbitmq resources or not"
 }
 
+/*
 variable "rds_create" {
   type        = map(bool)
   description = "Whether to create rds resources or not"
 }
-
+*/
 variable "ec2_instances_create" {
   type        = map(bool)
   description = "Whether to create EC2s resources or not"
 }
+
+variable "rds_create" {
+  type        = bool
+  default     = true
+  description = "Whether to generate RDS Password or not"
+}
+/*
+variable "rabbitmq_create" {
+  type        = bool
+  default     = true
+  description = "Whether to generate RabbitMQ Password or not"
+}
+*/
 
 ############ users & passwords ###########
 
