@@ -95,7 +95,7 @@ resource "aws_mq_broker" "rabbit" {
   security_groups    = [module.rabbitmq-security-group.security_group_id]
   user {
     username = data.aws_ssm_parameter.mq_user.value
-    password = random_password.mq_pass.result
+    password = random_password.mq_pass[0].result
   }
 }
 
@@ -123,7 +123,7 @@ module "security-group-rds" {
 module "aws-rds" {
   source                    = "terraform-aws-modules/rds/aws"
   version                   = "~> 4.3.0"
-  create                    = var.rds_create[local.env_name]
+  create_db_instance        = var.rds_create[local.env_name]
   identifier                = "postgres-${local.env_name}-${var.env_class}"
   create_db_option_group    = false
   create_db_parameter_group = false
@@ -142,7 +142,7 @@ module "aws-rds" {
   db_name  = "postgres"
   username = data.aws_ssm_parameter.rds_user.value
   port     = 5432
-  password = random_password.rds_pass.result
+  password = random_password.rds_pass[0].result
 
   # db_subnet_group_name   = var.subnet_id[local.env_name]
   vpc_security_group_ids          = [module.security-group-rds.security_group_id]
@@ -252,7 +252,7 @@ resource "aws_ssm_parameter" "rds_pass" {
   name        = "/${var.env_class}/${local.env_name}/rds_pass"
   description = "Password for RDS (Amazon RDS)"
   type        = "SecureString"
-  value       = random_password.rds_pass.result
+  value       = random_password.rds_pass[0].result
   overwrite   = true
 
   tags = {
@@ -265,7 +265,7 @@ resource "aws_ssm_parameter" "mq_pass" {
   name        = "/${var.env_class}/${local.env_name}/mq_pass"
   description = "Password for RabitMQ brocker (Amazon MQ service)"
   type        = "SecureString"
-  value       = random_password.mq_pass.result
+  value       = random_password.mq_pass[0].result
   overwrite   = true
 
   tags = {
@@ -305,7 +305,7 @@ resource "aws_ssm_parameter" "mq_endpoint" {
   description = "RabitMQ Endpoint (Amazon MQ service)"
   type        = "String"
 //  value       = substr(aws_mq_broker.rabbit.instances.0.endpoints.0,8,(length("${aws_mq_broker.rabbit.instances.0.endpoints.0}") - 5))
-  value       = split(":",split("//", aws_mq_broker.rabbit.instances.0.endpoints.0)[1])[0]
+  value       = split(":",split("//", aws_mq_broker.rabbit[0].instances.0.endpoints.0)[1])[0]
   overwrite   = true
 
   tags = {
