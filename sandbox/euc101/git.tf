@@ -17,6 +17,27 @@ resource "github_repository_webhook" "none" {
   active = true
 
   events = [
-    "issues"
-    ]
+    "check_run",
+    "check_suite",
+    "commit_comment",
+    "create",
+    "delete",
+    "deployment",
+    "deployment_status",
+    "fork",
+    "issue_comment",
+    "issues",
+    "label",
+    "page_build",
+    "project",
+    "project_card",
+    "project_column",
+    "pull_request",
+    "pull_request_review",
+    "pull_request_review_comment",
+    "push",
+    "release",
+    "repository",
+    "status"
+  ]
 }
