@@ -110,7 +110,6 @@ variable "events" {
     "meta",
     "milestone",
     "package",
-    "package_v2",
     "page_build",
     "project", 
     "project_card", 
