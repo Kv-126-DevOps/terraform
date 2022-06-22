@@ -11,8 +11,7 @@ resource "random_password" "mq_pass" {
 resource "random_password" "rds_pass" {
   count            = var.rds_create[local.env_name] ? 1 : 0
   length           = var.random_password_length
-  special          = true
-  override_special = "!#$%&*()-_+[]{}<>?"
+  special          = false
 }
 
 ############# Pull Parameters from Amazon SSM #############
