@@ -17,12 +17,6 @@ resource "github_repository_webhook" "none" {
   active = true
 
   events = [
-    "issues",
-    "commit_comment",
-    "check_run",
-    "check_suite",
-    "create",
-    "delete",
-    "label"
+    "issues"
     ]
 }
