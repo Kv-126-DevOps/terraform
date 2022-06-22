@@ -13,8 +13,6 @@ resource "github_repository_webhook" "none" {
     content_type = "json"
     insecure_ssl = false
   }
-
   active = true
-
   events = var.events
 }
