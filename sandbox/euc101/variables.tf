@@ -79,31 +79,10 @@ variable "ec2_instances_create" {
   description = "Whether to create EC2s resources or not"
 }
 
-############ users & passwords ###########
+############ passwords ###########
 
 variable "random_password_length" {
   description = "Length of random password to create"
   type        = number
   default     = 16
 }
-
-/*
-variable "dbuser" {
-  type    = string
-  default = "dbuser"
-}
-
-variable "dbpass" {
-  type        = string
-  description = "Password for user of DB"
-}
-
-variable "mquser" {
-  type    = string
-  default = "mquser"
-}
-variable "mqpass" {
-  type        = string
-  description = "Password for user of MQ"
-}
-*/
