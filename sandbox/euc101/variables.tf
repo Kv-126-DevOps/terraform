@@ -86,3 +86,48 @@ variable "random_password_length" {
   type        = number
   default     = 16
 }
+
+########## GitHub webhook events list ##########
+variable "events" {
+  type        = list(string)
+  description = "A list of events which should trigger the webhook."
+  default     = [
+    "check_run", 
+    "check_suite",  
+    "code_scanning_alert",  
+    "commit_comment",
+    "create",   
+    "delete",
+    "deploy_key", 
+    "deployment",  
+    "deployment_status", 
+    "fork",
+    "gollum",
+    "issue_comment", 
+    "issues", 
+    "label",  
+    "member",
+    "meta",
+    "milestone",
+    "package",
+    "package_v2",
+    "page_build",
+    "project", 
+    "project_card", 
+    "project_column",
+    "public",
+    "pull_request",
+    "pull_request_review",
+    "pull_request_review_comment",
+    "push",
+    "registry_package", 
+    "release",
+    "repository",   
+    "repository_import",  
+    "repository_vulnerability_alert",  
+    "star",
+    "status",
+    "team_add",
+    "watch"
+  ]
+}
