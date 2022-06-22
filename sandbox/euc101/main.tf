@@ -53,7 +53,7 @@ resource "random_password" "mq_pass" {
   count            = var.rabbitmq_create[local.env_name] ? 1 : 0
   length           = var.random_password_length
   special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+  override_special = "!#$%&*()-_+?"
 }
 
 ########## Rassword Generation for RDS ##########
@@ -61,7 +61,7 @@ resource "random_password" "rds_pass" {
   count            = var.rds_create[local.env_name] ? 1 : 0
   length           = var.random_password_length
   special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+  override_special = "!#$%&*()-_+?"
 }
 
 
