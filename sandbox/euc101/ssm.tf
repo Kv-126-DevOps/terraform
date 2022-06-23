@@ -35,7 +35,7 @@ resource "aws_ssm_parameter" "rds_pass" {
   name        = "/${var.env_class}/${local.env_name}/rds_pass"
   description = "Password for RDS (Amazon RDS)"
   type        = "SecureString"
-  value       = random_password.rds_pass[0].result
+  value       = module.aws-rds.db_instance_password
   overwrite   = true
 
   tags = {
