@@ -102,7 +102,7 @@ module "aws-rds" {
   db_name  = "postgres"
   username = data.aws_ssm_parameter.rds_user.value
   port     = 5432
-  password = random_password.rds_pass[0].result
+  password = "${random_password.rds_pass[0].result}"
 
   # db_subnet_group_name   = var.subnet_id[local.env_name]
   vpc_security_group_ids          = [module.security-group-rds.security_group_id]
