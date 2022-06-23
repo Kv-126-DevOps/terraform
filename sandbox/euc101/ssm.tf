@@ -1,4 +1,3 @@
-############# Password Generation #############
 ########## Rassword Generation for RabbitMQ ##########
 resource "random_password" "mq_pass" {
   count            = var.rabbitmq_create[local.env_name] ? 1 : 0
