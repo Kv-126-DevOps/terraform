@@ -78,40 +78,36 @@ module "security-group-rds" {
   tags = local.common_tags
 }
 
-# ########## RDS ##########
-module "aws-rds" {
-  source                    = "terraform-aws-modules/rds/aws"
-  version                   = "~> 4.4.0"
-  create_db_instance        = var.rds_create[local.env_name]
-  identifier                = "postgres-${local.env_name}-${var.env_class}"
-  create_db_option_group    = false
-  create_db_parameter_group = false
-  iam_database_authentication_enabled = true
+############ RDS ##########
+resource "aws_db_instance" "rds" {
+  identifier             = "postgres-${local.env_name}-${var.env_class}"
+  instance_class         = "db.t3.micro"
+  allocated_storage      = 10
+  engine                 = "postgres"
+  engine_version         = "14.2"
+  username               = data.aws_ssm_parameter.rds_user.value
+  password               = random_password.rds_pass[0].result
+  db_name                = "postgres"
+  port                   = 5432
+#  db_subnet_group_name   = ""
+  vpc_security_group_ids = [module.security-group-rds.security_group_id]
+  parameter_group_name   = aws_db_parameter_group.timezone.name
+  publicly_accessible    = false
+  skip_final_snapshot    = true
 
-  # All available versions: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html#PostgreSQL.Concepts
-  engine               = "postgres"
-  engine_version       = "14.1"
-  family               = "postgres14" # DB parameter group
-  major_engine_version = "14"         # DB option group
-  instance_class       = "db.t4g.micro"
-  allocated_storage    = 10
-
-  # NOTE: Do NOT use 'user' as the value for 'username' as it throws:
-  # "Error creating DB Instance: InvalidParameterValue: MasterUsername
-  # user cannot be used as it is a reserved word used by the engine"
-  db_name  = "postgres"
-  username = data.aws_ssm_parameter.rds_user.value
-  port     = 5432
-  # password = random_password.rds_pass[0].result
-
-  # db_subnet_group_name   = var.subnet_id[local.env_name]
-  vpc_security_group_ids          = [module.security-group-rds.security_group_id]
-  maintenance_window              = "Mon:00:00-Mon:03:00"
-  backup_window                   = "03:00-06:00"
-  backup_retention_period         = 0
-  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
-  create_cloudwatch_log_group     = true
   tags                            = local.common_tags
+}
+
+########### RDS parameter_group for config timezone ###########
+resource "aws_db_parameter_group" "timezone" {
+  name                     = "timezone"
+  family                   = "postgres14"
+
+  parameter {
+      name  = "timezone"
+      value = "Europe/Kiev"
+    }
+
 }
 
 ########### EC2 instances for services ##########

@@ -5,6 +5,13 @@ resource "random_password" "mq_pass" {
   special          = false
 }
 
+########## Rassword Generation for RDS ##########
+resource "random_password" "rds_pass" {
+  count            = var.rds_create[local.env_name] ? 1 : 0
+  length           = var.random_password_length
+  special          = false
+}
+
 ############# Pull Parameters from Amazon SSM #############
 ########## GIT_TOKEN ##########
 data "aws_ssm_parameter" "git_token" {
@@ -27,7 +34,8 @@ resource "aws_ssm_parameter" "rds_pass" {
   name        = "/${var.env_class}/${local.env_name}/rds_pass"
   description = "Password for RDS (Amazon RDS)"
   type        = "SecureString"
-  value       = module.aws-rds.db_instance_password
+#  value       = module.aws-rds.db_instance_password
+  value       = random_password.rds_pass[0].result
   overwrite   = true
 
   tags = {
