@@ -45,21 +45,19 @@ module "rabbitmq-security-group" {
 }
 
 ########## RabbitMQ ###########
-resource "aws_mq_broker" "rabbit" {
-  count              = var.rabbitmq_create[local.env_name] ? 1 : 0
+module "amazon-mq-service" {
+  source = "github.com/Kv-126-DevOps/terraform-modules//rabbit-mq-module?ref=3-terraform-modules-create-amazon-rabbitmq-module"
+  create = var.rabbitmq_create[local.env_name]
   broker_name        = "rabbit-${local.env_name}-${var.env_class}"
   engine_type        = "RabbitMQ"
   engine_version     = "3.9.16"
   host_instance_type = "mq.t3.micro"
   security_groups    = [module.rabbitmq-security-group.security_group_id]
-  user {
-    username = data.aws_ssm_parameter.mq_user.value
-    password = random_password.mq_pass[0].result
-  }
+  username           = data.aws_ssm_parameter.mq_user.value
+  password           = random_password.mq_pass[0].result
 }
 
-
-########## Security group for RDS / RDS ##########
+########## Security group for RDS  ##########
 module "security-group-rds" {
   source      = "terraform-aws-modules/security-group/aws"
   create      = var.rds_create[local.env_name]
@@ -78,32 +76,25 @@ module "security-group-rds" {
   tags = local.common_tags
 }
 
-# ########## RDS ##########
+############ RDS ##########
 module "aws-rds" {
-  source                    = "terraform-aws-modules/rds/aws"
-  version                   = "~> 4.4.0"
-  create_db_instance        = var.rds_create[local.env_name]
-  identifier                = "postgres-${local.env_name}-${var.env_class}"
-  create_db_option_group    = false
-  create_db_parameter_group = false
+  source                              = "terraform-aws-modules/rds/aws"
+  version                             = "~> 4.4.0"
+  create_db_instance                  = var.rds_create[local.env_name]
+  identifier                          = "postgres-${local.env_name}-${var.env_class}"
+  create_db_option_group              = false
+  create_db_parameter_group           = false
   iam_database_authentication_enabled = true
-
-  # All available versions: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html#PostgreSQL.Concepts
   engine               = "postgres"
   engine_version       = "14.1"
   family               = "postgres14" # DB parameter group
   major_engine_version = "14"         # DB option group
   instance_class       = "db.t4g.micro"
   allocated_storage    = 10
-
-  # NOTE: Do NOT use 'user' as the value for 'username' as it throws:
-  # "Error creating DB Instance: InvalidParameterValue: MasterUsername
-  # user cannot be used as it is a reserved word used by the engine"
   db_name  = "postgres"
   username = data.aws_ssm_parameter.rds_user.value
   port     = 5432
   # password = random_password.rds_pass[0].result
-
   # db_subnet_group_name   = var.subnet_id[local.env_name]
   vpc_security_group_ids          = [module.security-group-rds.security_group_id]
   maintenance_window              = "Mon:00:00-Mon:03:00"
@@ -116,8 +107,7 @@ module "aws-rds" {
 
 ########### EC2 instances for services ##########
 module "ec2-instance-service" {
-  source                 = "terraform-aws-modules/ec2-instance/aws"
-  version                = "~> 3.0"
+  source = "github.com/Kv-126-DevOps/terraform-modules//ec2-instance-module?ref=1-terraform-modules-create-ec2-instance-module"
   create                 = var.ec2_instances_create[local.env_name]
   for_each               = toset(["rabbit_to_db", "rest_api", "frontend", "rabbit_to_slack"])
   name                   = "${each.key}_${local.env_name}_${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
@@ -156,8 +146,7 @@ module "security-group-json" {
 
 ############### EC2 json-filter ############
 module "ec2-instance-service-json" {
-  source                 = "terraform-aws-modules/ec2-instance/aws"
-  version                = "~> 3.0"
+  source = "github.com/Kv-126-DevOps/terraform-modules//ec2-instance-module?ref=1-terraform-modules-create-ec2-instance-module"
   create                 = var.ec2_instances_create[local.env_name]
   name                   = "json_filter_${local.env_name}_${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
   ami                    = var.ami
@@ -175,9 +164,23 @@ module "ec2-instance-service-json" {
 }
 
 ######## Route53 / Target groups / Loadbalancers ###########
-resource "aws_lb_target_group_attachment" "frontend" {
-  count            = var.ec2_instances_create[local.env_name] ? 1 : 0
+module "alb_tg_attachment" {
+  source = "github.com/Kv-126-DevOps/terraform-modules//target-group-module?ref=2-terraform-modules-create-route-53-and-target-group-module"
+  create = var.ec2_instances_create[local.env_name]
   target_group_arn = var.target_group_arn
   target_id        = module.ec2-instance-service["frontend"].id
   port             = 5000
 }
+
+# module "route53-record" {
+#   source = "github.com/Kv-126-DevOps/terraform-modules//route-53-module?ref=2-terraform-modules-create-route-53-and-target-group-module"
+#   create = var.ec2_instances_create[local.env_name]
+#   zone_id = var.zone_id
+#   name    = var.name
+#   type    = var.type
+#   alias {
+#     name                   = var.alb_dns_name
+#     zone_id                = var.hosted_zone
+#     evaluate_target_health = var.evaluate_target_health
+#   }
+# }
