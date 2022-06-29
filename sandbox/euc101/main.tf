@@ -46,7 +46,7 @@ module "rabbitmq-security-group" {
 
 ########## RabbitMQ ###########
 module "amazon-mq-service" {
-  source = "github.com/Kv-126-DevOps/terraform-modules//rabbit-mq-module?ref=3-terraform-modules-create-amazon-rabbitmq-module"
+  source = "github.com/Kv-126-DevOps/terraform-modules//rabbit-mq-module"
   create = var.rabbitmq_create[local.env_name]
   broker_name        = "rabbit-${local.env_name}-${var.env_class}"
   engine_type        = "RabbitMQ"
@@ -107,7 +107,7 @@ module "aws-rds" {
 
 ########### EC2 instances for services ##########
 module "ec2-instance-service" {
-  source = "github.com/Kv-126-DevOps/terraform-modules//ec2-instance-module?ref=1-terraform-modules-create-ec2-instance-module"
+  source = "github.com/Kv-126-DevOps/terraform-modules//ec2-instance-module"
   create                 = var.ec2_instances_create[local.env_name]
   for_each               = toset(["rabbit_to_db", "rest_api", "frontend", "rabbit_to_slack"])
   name                   = "${each.key}_${local.env_name}_${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
@@ -146,7 +146,7 @@ module "security-group-json" {
 
 ############### EC2 json-filter ############
 module "ec2-instance-service-json" {
-  source = "github.com/Kv-126-DevOps/terraform-modules//ec2-instance-module?ref=1-terraform-modules-create-ec2-instance-module"
+  source = "github.com/Kv-126-DevOps/terraform-modules//ec2-instance-module"
   create                 = var.ec2_instances_create[local.env_name]
   name                   = "json_filter_${local.env_name}_${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
   ami                    = var.ami
@@ -165,7 +165,7 @@ module "ec2-instance-service-json" {
 
 ######## Route53 / Target groups / Loadbalancers ###########
 module "alb_tg_attachment" {
-  source = "github.com/Kv-126-DevOps/terraform-modules//target-group-module?ref=2-terraform-modules-create-route-53-and-target-group-module"
+  source = "github.com/Kv-126-DevOps/terraform-modules//target-group-module"
   create = var.ec2_instances_create[local.env_name]
   target_group_arn = var.target_group_arn
   target_id        = module.ec2-instance-service["frontend"].id
