@@ -56,13 +56,14 @@ variable "security_group_ids" {
   default     = ["sg-070712bd20c3ac748", "sg-00aebda5b39acaef6"]
 }
 
+
 variable "rds_cloudwatch_exports" {
   type        = list(string)
   description = "Cloudwatch logs exports for RDS"
   default     = ["postgresql", "upgrade"]
 }
 
-####################################################3
+####################################################
 
 variable "rabbitmq_create" {
   type        = map(bool)
