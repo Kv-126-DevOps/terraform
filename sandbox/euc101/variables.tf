@@ -56,7 +56,15 @@ variable "security_group_ids" {
   default     = ["sg-070712bd20c3ac748", "sg-00aebda5b39acaef6"]
 }
 
-####################################################3
+
+variable "rds_cloudwatch_exports" {
+  type        = list(string)
+  description = "Cloudwatch logs exports for RDS"
+  default     = ["postgresql", "upgrade"]
+}
+
+####################################################
+
 variable "rabbitmq_create" {
   type        = map(bool)
   description = "Whether to create rabbitmq resources or not"
@@ -72,22 +80,54 @@ variable "ec2_instances_create" {
   description = "Whether to create EC2s resources or not"
 }
 
-############ users & passwords ###########
-variable "dbuser" {
-  type    = string
-  default = "dbuser"
+############ passwords ###########
+
+variable "random_password_length" {
+  description = "Length of random password to create"
+  type        = number
+  default     = 16
 }
 
-variable "dbpass" {
-  type        = string
-  description = "Password for user of DB"
-}
-
-variable "mquser" {
-  type    = string
-  default = "mquser"
-}
-variable "mqpass" {
-  type        = string
-  description = "Password for user of MQ"
+########## GitHub webhook events list ##########
+variable "events" {
+  type        = list(string)
+  description = "A list of events which should trigger the webhook."
+  default     = [
+    "check_run", 
+    "check_suite",  
+    "code_scanning_alert",  
+    "commit_comment",
+    "create",   
+    "delete",
+    "deploy_key", 
+    "deployment",  
+    "deployment_status", 
+    "fork",
+    "gollum",
+    "issue_comment", 
+    "issues", 
+    "label",  
+    "member",
+    "meta",
+    "milestone",
+    "package",
+    "page_build",
+    "project", 
+    "project_card", 
+    "project_column",
+    "public",
+    "pull_request",
+    "pull_request_review",
+    "pull_request_review_comment",
+    "push",
+    "registry_package", 
+    "release",
+    "repository",   
+    "repository_import",  
+    "repository_vulnerability_alert",  
+    "star",
+    "status",
+    "team_add",
+    "watch"
+  ]
 }
