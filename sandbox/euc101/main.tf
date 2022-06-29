@@ -171,16 +171,3 @@ module "alb_tg_attachment" {
   target_id        = module.ec2-instance-service["frontend"].id
   port             = 5000
 }
-
-# module "route53-record" {
-#   source = "github.com/Kv-126-DevOps/terraform-modules//route-53-module?ref=2-terraform-modules-create-route-53-and-target-group-module"
-#   create = var.ec2_instances_create[local.env_name]
-#   zone_id = var.zone_id
-#   name    = var.name
-#   type    = var.type
-#   alias {
-#     name                   = var.alb_dns_name
-#     zone_id                = var.hosted_zone
-#     evaluate_target_health = var.evaluate_target_health
-#   }
-# }
