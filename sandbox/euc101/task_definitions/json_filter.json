@@ -1,0 +1,47 @@
+[
+  {
+    "image": "779414916509.dkr.ecr.eu-central-1.amazonaws.com/kv126/json-filter:latest",
+    "name": "json_filter",
+    "portMappings": [
+      {
+        "hostPort": 5000,
+        "protocol": "tcp",
+        "containerPort": 5000
+      }
+    ],
+    "environment": [
+      {
+        "name": "HOST",
+        "value": "0.0.0.0"
+      },
+      {
+        "name": "MQ_CONNECTION",
+        "value": "SSL"
+      },
+      {
+        "name": "QUEUE_RESTAPI",
+        "value": "restapi"
+      },
+      {
+        "name": "QUEUE_SLACK",
+        "value": "slack"
+      },
+      {
+        "name": "RABBIT_HOST",
+        "valueFrom": "${mq_endpoint}"
+      },
+      {
+        "name": "RABBIT_PORT",
+        "value": "5671"
+      },
+      {
+        "name": "RABBIT_PW",
+        "valueFrom": "${mq_pass}"
+      },
+      {
+        "name": "RABBIT_USER",
+        "value": "mquser"
+      }
+    ]
+  }
+]
