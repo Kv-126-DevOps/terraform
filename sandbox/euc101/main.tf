@@ -1,4 +1,4 @@
-############## AWS Provider ############
+########## AWS Provider ##########
 provider "aws" {
   region = var.region
 }
@@ -13,7 +13,7 @@ terraform {
   }
 }
 
-############ Common composed values shared across the different modules ############
+########## Common composed values shared across the different modules ##########
 locals {
   env_name = terraform.workspace
   common_tags = {
@@ -24,30 +24,23 @@ locals {
   }
 }
 
-########## Used modules #####
-
-####### Security group for RabbitMQ #########
-module "rabbitmq-security-group" {
-  source              = "terraform-aws-modules/security-group/aws//modules/rabbitmq"
-  version             = "~> 4.0"
-  create              = var.rabbitmq_create[local.env_name]
-  vpc_id              = var.vpc_id[local.env_name]
-  name                = "${local.env_name}-${var.env_class}-rabbitmq-security-group"
-  ingress_cidr_blocks = ["0.0.0.0/0"]
-  ingress_with_source_security_group_id = [
-    {
-      description              = "HTTPS for common sg"
-      rule                     = "https-443-tcp"
-      source_security_group_id = "sg-00aebda5b39acaef6"
-    },
-  ]
+########## ECS Cluster ##########
+resource "aws_ecs_cluster" "aws-ecs-cluster" {
+  name = "${local.env_name}-${var.env_class}-cluster"
   tags = local.common_tags
 }
 
+########## ECS CloudWatch ##########
+resource "aws_cloudwatch_log_group" "log-group" {
+  name = "/cluster-${local.env_name}-${var.env_class}/logs"
+  tags = local.common_tags
+}
+
+
 ########## RabbitMQ ###########
 module "amazon-mq-service" {
-  source = "github.com/Kv-126-DevOps/terraform-modules//rabbit-mq-module"
-  create = var.rabbitmq_create[local.env_name]
+  source             = "github.com/Kv-126-DevOps/terraform-modules//rabbit-mq-module"
+  create             = var.rabbitmq_create[local.env_name]
   broker_name        = "rabbit-${local.env_name}-${var.env_class}"
   engine_type        = "RabbitMQ"
   engine_version     = "3.9.16"
@@ -57,26 +50,7 @@ module "amazon-mq-service" {
   password           = random_password.mq_pass[0].result
 }
 
-########## Security group for RDS  ##########
-module "security-group-rds" {
-  source      = "terraform-aws-modules/security-group/aws"
-  create      = var.rds_create[local.env_name]
-  name        = "${local.env_name}-${var.env_class}-rds-security-group"
-  description = "PostgreSQL with opened 5432 port within VPC"
-  vpc_id      = var.vpc_id[local.env_name]
-  ingress_with_cidr_blocks = [
-    {
-      from_port   = 5432
-      to_port     = 5432
-      protocol    = "tcp"
-      description = "PostgreSQL access within VPC"
-      cidr_blocks = "172.31.0.0/16"
-    },
-  ]
-  tags = local.common_tags
-}
-
-############ RDS ##########
+########## RDS ##########
 module "aws-rds" {
   source                              = "terraform-aws-modules/rds/aws"
   version                             = "~> 4.4.0"
@@ -85,17 +59,15 @@ module "aws-rds" {
   create_db_option_group              = false
   create_db_parameter_group           = false
   iam_database_authentication_enabled = true
-  engine               = "postgres"
-  engine_version       = "14.1"
-  family               = "postgres14" # DB parameter group
-  major_engine_version = "14"         # DB option group
-  instance_class       = "db.t4g.micro"
-  allocated_storage    = 10
-  db_name  = "postgres"
-  username = data.aws_ssm_parameter.rds_user.value
-  port     = 5432
-  # password = random_password.rds_pass[0].result
-  # db_subnet_group_name   = var.subnet_id[local.env_name]
+  engine                              = "postgres"
+  engine_version                      = "14.1"
+  family                              = "postgres14" # DB parameter group
+  major_engine_version                = "14"         # DB option group
+  instance_class                      = "db.t4g.micro"
+  allocated_storage                   = 10
+  db_name                             = "postgres"
+  username                            = data.aws_ssm_parameter.rds_user.value
+  port                                = 5432
   vpc_security_group_ids          = [module.security-group-rds.security_group_id]
   maintenance_window              = "Mon:00:00-Mon:03:00"
   backup_window                   = "03:00-06:00"
@@ -107,7 +79,7 @@ module "aws-rds" {
 
 ########### EC2 instances for services ##########
 module "ec2-instance-service" {
-  source = "github.com/Kv-126-DevOps/terraform-modules//ec2-instance-module"
+  source                 = "github.com/Kv-126-DevOps/terraform-modules//ec2-instance-module"
   create                 = var.ec2_instances_create[local.env_name]
   for_each               = toset(["rabbit_to_db", "rest_api", "frontend", "rabbit_to_slack"])
   name                   = "${each.key}_${local.env_name}_${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
@@ -125,28 +97,9 @@ module "ec2-instance-service" {
   )
 }
 
-######### secirity group for json-filter ###########
-module "security-group-json" {
-  source      = "terraform-aws-modules/security-group/aws"
-  create      = var.ec2_instances_create[local.env_name]
-  name        = "${local.env_name}-${var.env_class}-json_filter-security-group"
-  description = "Open 5000 port for webhooks"
-  vpc_id      = var.vpc_id[local.env_name]
-  ingress_with_cidr_blocks = [
-    {
-      from_port   = 5000
-      to_port     = 5000
-      protocol    = "tcp"
-      description = "Open 5000 port for webhook"
-      cidr_blocks = "0.0.0.0/0"
-    },
-  ]
-  tags = local.common_tags
-}
-
-############### EC2 json-filter ############
+############ EC2 json-filter ############
 module "ec2-instance-service-json" {
-  source = "github.com/Kv-126-DevOps/terraform-modules//ec2-instance-module"
+  source                 = "github.com/Kv-126-DevOps/terraform-modules//ec2-instance-module"
   create                 = var.ec2_instances_create[local.env_name]
   name                   = "json_filter_${local.env_name}_${var.env_class}.${var.route_53_private_zone_name[local.env_name]}"
   ami                    = var.ami
@@ -163,10 +116,10 @@ module "ec2-instance-service-json" {
   )
 }
 
-######## Route53 / Target groups / Loadbalancers ###########
+############ Route53 / Target groups / Loadbalancers ############
 module "alb_tg_attachment" {
-  source = "github.com/Kv-126-DevOps/terraform-modules//target-group-module"
-  create = var.ec2_instances_create[local.env_name]
+  source           = "github.com/Kv-126-DevOps/terraform-modules//target-group-module"
+  create           = var.ec2_instances_create[local.env_name]
   target_group_arn = var.target_group_arn
   target_id        = module.ec2-instance-service["frontend"].id
   port             = 5000

@@ -92,42 +92,48 @@ variable "random_password_length" {
 variable "events" {
   type        = list(string)
   description = "A list of events which should trigger the webhook."
-  default     = [
-    "check_run", 
-    "check_suite",  
-    "code_scanning_alert",  
+  default = [
+    "check_run",
+    "check_suite",
+    "code_scanning_alert",
     "commit_comment",
-    "create",   
+    "create",
     "delete",
-    "deploy_key", 
-    "deployment",  
-    "deployment_status", 
+    "deploy_key",
+    "deployment",
+    "deployment_status",
     "fork",
     "gollum",
-    "issue_comment", 
-    "issues", 
-    "label",  
+    "issue_comment",
+    "issues",
+    "label",
     "member",
     "meta",
     "milestone",
     "package",
     "page_build",
-    "project", 
-    "project_card", 
+    "project",
+    "project_card",
     "project_column",
     "public",
     "pull_request",
     "pull_request_review",
     "pull_request_review_comment",
     "push",
-    "registry_package", 
+    "registry_package",
     "release",
-    "repository",   
-    "repository_import",  
-    "repository_vulnerability_alert",  
+    "repository",
+    "repository_import",
+    "repository_vulnerability_alert",
     "star",
     "status",
     "team_add",
     "watch"
   ]
+}
+
+variable "slack_url" {
+  type        = string
+  description = "Slack Url"
+  default     = "https://hooks.slack.com/services/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"
 }

@@ -1,0 +1,62 @@
+[
+  {
+    "image": "779414916509.dkr.ecr.eu-central-1.amazonaws.com/kv126/rabbit-to-slack:1.0.0",
+    "name": "rabbit_to_slack",
+    "entryPoint": null,
+    "essential": true,
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "${cloudwatch}",
+        "awslogs-region": "${region}",
+        "awslogs-stream-prefix": "slack"
+      }
+    },
+    "portMappings": [],
+    "environment": [
+      {
+        "name": "MQ_CONNECTION",
+        "value": "SSL"
+      },
+      {
+        "name": "RABBIT_HOST",
+        "value": "${mq_endpoint}"
+      },
+      {
+        "name": "RABBIT_PORT",
+        "value": "5671"
+      },
+      {
+        "name": "RABBIT_PW",
+        "value": "${mq_pass}"
+      },
+      {
+        "name": "RABBIT_QUEUE",
+        "value": "restapi"
+      },
+      {
+        "name": "RABBIT_USER",
+        "value": "mquser"
+      },
+      {
+        "name": "SLACK_URL",
+        "value": "${slack_url}"
+      },
+      {
+        "name": "SLACK_BUG",
+        "value": "#bug"
+      },
+      {
+        "name": "SLACK_US",
+        "value": "#testcase"
+      },
+      {
+        "name": "SLACK_TC",
+        "value": "#userstory"
+      }
+    ],
+    "cpu": 256,
+    "memory": 512,
+    "networkMode": "awsvpc"
+  }
+]

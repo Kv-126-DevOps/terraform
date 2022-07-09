@@ -1,0 +1,35 @@
+[
+  {
+    "image": "779414916509.dkr.ecr.eu-central-1.amazonaws.com/kv126/frontend:1.0.0",
+    "name": "frontend",
+    "entryPoint": null,
+    "essential": true,
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "${cloudwatch}",
+        "awslogs-region": "${region}",
+        "awslogs-stream-prefix": "frontend"
+      }
+    },
+    "portMappings": [
+      {
+        "hostPort": 5000,
+        "containerPort": 5000
+      }
+    ],
+    "environment": [
+      {
+        "name": "RESTAPI_HOST",
+        "value": "${service_restapi}"
+      },
+      {
+        "name": "RESTAPI_PORT",
+        "value": "5000"
+      }
+    ],
+    "cpu": 256,
+    "memory": 512,
+    "networkMode": "awsvpc"
+  }
+]

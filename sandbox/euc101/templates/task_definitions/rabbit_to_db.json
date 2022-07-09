@@ -1,0 +1,66 @@
+[
+  {
+    "image": "779414916509.dkr.ecr.eu-central-1.amazonaws.com/kv126/rabbit-to-db:1.0.0",
+    "name": "rabbit_to_db",
+    "entryPoint": null,
+    "essential": true,
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "${cloudwatch}",
+        "awslogs-region": "${region}",
+        "awslogs-stream-prefix": "rabbit_to_db"
+      }
+    },
+    "portMappings": [],
+    "environment": [
+      {
+        "name": "MQ_CONNECTION",
+        "value": "SSL"
+      },
+      {
+        "name": "POSTGRES_DB",
+        "value": "postgres"
+      },
+      {
+        "name": "POSTGRES_HOST",
+        "value": "${rds_endpoint}"
+      },
+      {
+        "name": "POSTGRES_PORT",
+        "value": "5432"
+      },
+      {
+        "name": "POSTGRES_PW",
+        "value": "${rds_pass}"
+      },
+      {
+        "name": "POSTGRES_USER",
+        "value": "dbuser"
+      },
+      {
+        "name": "RABBIT_HOST",
+        "value": "${mq_endpoint}"
+      },
+      {
+        "name": "RABBIT_PORT",
+        "value": "5671"
+      },
+      {
+        "name": "RABBIT_PW",
+        "value": "${mq_pass}"
+      },
+      {
+        "name": "RABBIT_QUEUE",
+        "value": "restapi"
+      },
+      {
+        "name": "RABBIT_USER",
+        "value": "mquser"
+      }
+    ],
+    "cpu": 256,
+    "memory": 512,
+    "networkMode": "awsvpc"
+  }
+]

@@ -1,28 +1,30 @@
-########## Password Generation for RabbitMQ ##########
+### Password Generation for RabbitMQ ###
 resource "random_password" "mq_pass" {
   count   = var.rabbitmq_create[local.env_name] ? 1 : 0
   length  = var.random_password_length
   special = false
 }
 
-############# Pull Parameters from Amazon SSM #############
-########## GIT_TOKEN ##########
+
+########## Pull Parameters from Amazon SSM ##########
+### GIT_TOKEN ###
 data "aws_ssm_parameter" "git_token" {
   name = "/${var.env_class}/${local.env_name}/git_token"
 }
 
-########## RabbitMQ User ##########
+### RabbitMQ User ###
 data "aws_ssm_parameter" "mq_user" {
   name = "/${var.env_class}/${local.env_name}/mq_user"
 }
 
-########## RDS User ##########
+### RDS User ###
 data "aws_ssm_parameter" "rds_user" {
   name = "/${var.env_class}/${local.env_name}/rds_user"
 }
 
-############# Save Parameters to Amazon SSM #############
-########## Save RDS password ##########
+
+########## Save Parameters to Amazon SSM ##########
+### Save RDS password ###
 resource "aws_ssm_parameter" "rds_pass" {
   name        = "/${var.env_class}/${local.env_name}/rds_pass"
   description = "Password for RDS (Amazon RDS)"
@@ -35,7 +37,7 @@ resource "aws_ssm_parameter" "rds_pass" {
   }
 }
 
-########## Save RabbitMQ password ##########
+### Save RabbitMQ password ###
 resource "aws_ssm_parameter" "mq_pass" {
   name        = "/${var.env_class}/${local.env_name}/mq_pass"
   description = "Password for RabitMQ brocker (Amazon MQ service)"
@@ -48,7 +50,7 @@ resource "aws_ssm_parameter" "mq_pass" {
   }
 }
 
-########## Save RDS Endpoint ##########
+### Save RDS Endpoint ###
 resource "aws_ssm_parameter" "rds_endpoint" {
   name        = "/${var.env_class}/${local.env_name}/rds_endpoint"
   description = "RDS Endpoint"
@@ -61,7 +63,7 @@ resource "aws_ssm_parameter" "rds_endpoint" {
   }
 }
 
-########## Save rest-api private_ip ##########
+### Save rest-api private_ip ###
 resource "aws_ssm_parameter" "rest_api_host" {
   name        = "/${var.env_class}/${local.env_name}/rest_api_host"
   description = "rest-api Host"
@@ -74,7 +76,7 @@ resource "aws_ssm_parameter" "rest_api_host" {
   }
 }
 
-######## Save Amazon MQ SSL Endpoint ##########
+### Save Amazon MQ SSL Endpoint ###
 resource "aws_ssm_parameter" "mq_endpoint" {
   name        = "/${var.env_class}/${local.env_name}/mq_endpoint"
   description = "RabitMQ Endpoint (Amazon MQ service)"
