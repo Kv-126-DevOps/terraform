@@ -10,7 +10,7 @@ resource "aws_service_discovery_private_dns_namespace" "segment" {
 ### Applications service discovery service ###
 resource "aws_service_discovery_service" "applications" {
   for_each = toset([
-    for app in ["json_filter", "rabbit_to_db", "rabbit_to_slack", "rest_api", "frontend"] : app
+    for app in ["json_filter", "rabbit_to_db", /*"rabbit_to_slack",*/ "rest_api", "frontend"] : app
     if var.ecs_create[local.env_name]
   ])
   name = each.key
@@ -34,7 +34,7 @@ resource "aws_service_discovery_service" "applications" {
 ### Application task definition ###
 resource "aws_ecs_task_definition" "applications" {
   for_each = toset([
-    for app in ["json_filter", "rabbit_to_db", "rabbit_to_slack", "rest_api"] : app
+    for app in ["json_filter", "rabbit_to_db", /*"rabbit_to_slack",*/ "rest_api"] : app
     if var.ecs_create[local.env_name]
   ])
   family = "${each.key}_task"
@@ -59,7 +59,7 @@ resource "aws_ecs_task_definition" "applications" {
 
 data "aws_ecs_task_definition" "applications" {
   for_each = toset([
-    for app in ["json_filter", "rabbit_to_db", "rabbit_to_slack", "rest_api"] : app
+    for app in ["json_filter", "rabbit_to_db", /*"rabbit_to_slack",*/ "rest_api"] : app
     if var.ecs_create[local.env_name]
   ])
   task_definition = aws_ecs_task_definition.applications["${each.key}"].family
@@ -123,7 +123,7 @@ data "aws_ecs_task_definition" "frontend" {
 resource "aws_ecs_service" "applications" {
   depends_on = [module.amazon-mq-service, module.aws-rds]
   for_each = toset([
-    for app in ["json_filter", "rabbit_to_db", "rabbit_to_slack", "rest_api"] : app
+    for app in ["json_filter", "rabbit_to_db", /*"rabbit_to_slack",*/ "rest_api"] : app
     if var.ecs_create[local.env_name]
   ])
   name                 = "${each.key}_service"
