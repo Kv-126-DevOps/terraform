@@ -24,7 +24,7 @@ resource "github_repository_webhook" "ec2" {
 resource "time_sleep" "waiting_frontend" {
   depends_on      = [aws_ecs_service.frontend]
   count           = var.ecs_create[local.env_name] ? 1 : 0
-  create_duration = "15s"
+  create_duration = "10s"
 }
 
 ### get public ip ecs service ###

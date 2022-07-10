@@ -88,7 +88,7 @@ data "external" "restapi_service" {
 resource "time_sleep" "waiting_rest_api" {
   depends_on      = [aws_ecs_service.applications["rest_api"]]
   count           = var.ecs_create[local.env_name] ? 1 : 0
-  create_duration = "45s"
+  create_duration = "60s"
 }
 
 ### frontend task definition ###
