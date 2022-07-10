@@ -74,6 +74,14 @@ data "aws_route53_zone" "selected" {
   private_zone = true
 }
 
+### Awaiting for rest_api service ###
+resource "time_sleep" "waiting_rest_api" {
+  depends_on      = [aws_ecs_service.applications["rest_api"]]
+  count           = var.ecs_create[local.env_name] ? 1 : 0
+  create_duration = "60s"
+}
+
+### Get ip of restapi ecs service ###
 data "external" "restapi_service" {
   depends_on = [time_sleep.waiting_rest_api]
   count      = var.ecs_create[local.env_name] ? 1 : 0
@@ -82,13 +90,6 @@ data "external" "restapi_service" {
     hosted_zone = data.aws_route53_zone.selected[0].zone_id
     service     = "rest_api.${local.env_name}-${var.env_class}.local."
   }
-}
-
-### Awaiting for rest_api service ###
-resource "time_sleep" "waiting_rest_api" {
-  depends_on      = [aws_ecs_service.applications["rest_api"]]
-  count           = var.ecs_create[local.env_name] ? 1 : 0
-  create_duration = "60s"
 }
 
 ### frontend task definition ###
