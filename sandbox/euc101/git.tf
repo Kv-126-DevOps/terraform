@@ -22,25 +22,28 @@ resource "github_repository_webhook" "ec2" {
 ########## Create GitHub WebHook For ECS Fargate##########
 ### Awaiting for ECS services ###
 resource "time_sleep" "waiting_frontend" {
-  depends_on = [aws_ecs_service.frontend]
+  depends_on      = [aws_ecs_service.frontend]
+  count           = var.ecs_create[local.env_name] ? 1 : 0
   create_duration = "15s"
 }
 
 ### get public ip ecs service ###
 data "external" "json_ip" {
   depends_on = [time_sleep.waiting_frontend]
+  count      = var.ecs_create[local.env_name] ? 1 : 0
   program    = ["bash", "./templates/scripts/get_publicip.sh"]
   query = {
-    cluster_name = aws_ecs_cluster.aws-ecs-cluster.name
+    cluster_name = aws_ecs_cluster.aws-ecs-cluster[0].name
     service      = aws_ecs_service.applications["json_filter"].name
   }
 }
 
 ### Create WebHook##
 resource "github_repository_webhook" "ecs" {
+  count      = var.ecs_create[local.env_name] ? 1 : 0
   repository = "None"
   configuration {
-    url          = "http://${data.external.json_ip.result.publicip}:5000/"
+    url          = "http://${data.external.json_ip[0].result.publicip}:5000/"
     content_type = "json"
     insecure_ssl = false
   }

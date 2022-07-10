@@ -26,14 +26,16 @@ locals {
 
 ########## ECS Cluster ##########
 resource "aws_ecs_cluster" "aws-ecs-cluster" {
-  name = "${local.env_name}-${var.env_class}-cluster"
-  tags = local.common_tags
+  count = var.ecs_create[local.env_name] ? 1 : 0
+  name  = "${local.env_name}-${var.env_class}-cluster"
+  tags  = local.common_tags
 }
 
 ########## ECS CloudWatch ##########
 resource "aws_cloudwatch_log_group" "log-group" {
-  name = "/cluster-${local.env_name}-${var.env_class}/logs"
-  tags = local.common_tags
+  count = var.ecs_create[local.env_name] ? 1 : 0
+  name  = "/cluster-${local.env_name}-${var.env_class}/logs"
+  tags  = local.common_tags
 }
 
 
@@ -68,13 +70,13 @@ module "aws-rds" {
   db_name                             = "postgres"
   username                            = data.aws_ssm_parameter.rds_user.value
   port                                = 5432
-  vpc_security_group_ids          = [module.security-group-rds.security_group_id]
-  maintenance_window              = "Mon:00:00-Mon:03:00"
-  backup_window                   = "03:00-06:00"
-  backup_retention_period         = 0
-  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
-  create_cloudwatch_log_group     = true
-  tags                            = local.common_tags
+  vpc_security_group_ids              = [module.security-group-rds.security_group_id]
+  maintenance_window                  = "Mon:00:00-Mon:03:00"
+  backup_window                       = "03:00-06:00"
+  backup_retention_period             = 0
+  enabled_cloudwatch_logs_exports     = ["postgresql", "upgrade"]
+  create_cloudwatch_log_group         = true
+  tags                                = local.common_tags
 }
 
 ########### EC2 instances for services ##########

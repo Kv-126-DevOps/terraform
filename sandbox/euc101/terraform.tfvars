@@ -21,3 +21,7 @@ subnet_id = {
 route_53_private_zone_name = {
   euc101 = "private-kv126.pp.ua"
 }
+
+ecs_create = {
+  euc101 = true
+}

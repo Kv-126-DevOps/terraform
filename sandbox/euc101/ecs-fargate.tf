@@ -1,6 +1,7 @@
 ########## Service Discovery ##########
 ### Create private dns namespace ###
 resource "aws_service_discovery_private_dns_namespace" "segment" {
+  count       = var.ecs_create[local.env_name] ? 1 : 0
   name        = "${local.env_name}-${var.env_class}.local"
   description = "${var.env_class} service discovery"
   vpc         = var.vpc_id[local.env_name]
@@ -8,11 +9,14 @@ resource "aws_service_discovery_private_dns_namespace" "segment" {
 
 ### Applications service discovery service ###
 resource "aws_service_discovery_service" "applications" {
-  for_each = toset(["json_filter", "rabbit_to_db", /*"rabbit_to_slack",*/ "rest_api", "frontend"])
-  name     = each.key
+  for_each = toset([
+    for app in ["json_filter", "rabbit_to_db", "rabbit_to_slack", "rest_api", "frontend"] : app
+    if var.ecs_create[local.env_name]
+  ])
+  name = each.key
 
   dns_config {
-    namespace_id   = aws_service_discovery_private_dns_namespace.segment.id
+    namespace_id   = aws_service_discovery_private_dns_namespace.segment[0].id
     routing_policy = "MULTIVALUE"
     dns_records {
       ttl  = 10
@@ -29,15 +33,18 @@ resource "aws_service_discovery_service" "applications" {
 ########## ECS Fargate Task Definitions ##########
 ### Application task definition ###
 resource "aws_ecs_task_definition" "applications" {
-  for_each = toset(["json_filter", "rabbit_to_db", /*"rabbit_to_slack",*/ "rest_api"])
-  family   = "${each.key}_task"
+  for_each = toset([
+    for app in ["json_filter", "rabbit_to_db", "rabbit_to_slack", "rest_api"] : app
+    if var.ecs_create[local.env_name]
+  ])
+  family = "${each.key}_task"
   container_definitions = templatefile("./templates/task_definitions/${each.key}.json",
     { mq_endpoint  = split(":", split("//", module.amazon-mq-service.endpoint.0)[1])[0],
       mq_pass      = random_password.mq_pass[0].result,
       rds_endpoint = split(":", module.aws-rds.db_instance_endpoint)[0],
       rds_pass     = module.aws-rds.db_instance_password,
       slack_url    = var.slack_url,
-      cloudwatch   = aws_cloudwatch_log_group.log-group.id,
+      cloudwatch   = aws_cloudwatch_log_group.log-group[0].id,
       region       = var.region
     }
   )
@@ -51,22 +58,28 @@ resource "aws_ecs_task_definition" "applications" {
 }
 
 data "aws_ecs_task_definition" "applications" {
-  for_each        = toset(["json_filter", "rabbit_to_db", /*"rabbit_to_slack",*/ "rest_api"])
+  for_each = toset([
+    for app in ["json_filter", "rabbit_to_db", "rabbit_to_slack", "rest_api"] : app
+    if var.ecs_create[local.env_name]
+  ])
   task_definition = aws_ecs_task_definition.applications["${each.key}"].family
 }
+
 
 ######## Get rest_api ECS service host ########
 data "aws_route53_zone" "selected" {
   depends_on   = [aws_service_discovery_service.applications["rest_api"]]
-  name         = aws_service_discovery_private_dns_namespace.segment.name
+  count        = var.ecs_create[local.env_name] ? 1 : 0
+  name         = aws_service_discovery_private_dns_namespace.segment[0].name
   private_zone = true
 }
 
 data "external" "restapi_service" {
   depends_on = [time_sleep.waiting_rest_api]
+  count      = var.ecs_create[local.env_name] ? 1 : 0
   program    = ["bash", "./templates/scripts/get_service.sh"]
   query = {
-    hosted_zone = data.aws_route53_zone.selected.zone_id
+    hosted_zone = data.aws_route53_zone.selected[0].zone_id
     service     = "rest_api.${local.env_name}-${var.env_class}.local."
   }
 }
@@ -74,16 +87,18 @@ data "external" "restapi_service" {
 ### Awaiting for rest_api service ###
 resource "time_sleep" "waiting_rest_api" {
   depends_on      = [aws_ecs_service.applications["rest_api"]]
+  count           = var.ecs_create[local.env_name] ? 1 : 0
   create_duration = "45s"
 }
 
 ### frontend task definition ###
 resource "aws_ecs_task_definition" "frontend" {
-  family     = "frontend_task"
   depends_on = [aws_ecs_service.applications["rest_api"]]
+  count      = var.ecs_create[local.env_name] ? 1 : 0
+  family     = "frontend_task"
   container_definitions = templatefile("./templates/task_definitions/frontend.json",
-    { service_restapi = data.external.restapi_service.result.service_host,
-      cloudwatch      = aws_cloudwatch_log_group.log-group.id,
+    { service_restapi = data.external.restapi_service[0].result.service_host,
+      cloudwatch      = aws_cloudwatch_log_group.log-group[0].id,
       region          = var.region
     }
   )
@@ -98,17 +113,21 @@ resource "aws_ecs_task_definition" "frontend" {
 }
 
 data "aws_ecs_task_definition" "frontend" {
-  task_definition = aws_ecs_task_definition.frontend.family
+  count           = var.ecs_create[local.env_name] ? 1 : 0
+  task_definition = aws_ecs_task_definition.frontend[0].family
 }
 
 
 ########## ECS Fargate Services ##########
 ### Applications service ###
 resource "aws_ecs_service" "applications" {
-  depends_on           = [module.amazon-mq-service, module.aws-rds]
-  for_each             = toset(["json_filter", "rabbit_to_db", /*"rabbit_to_slack",*/ "rest_api"])
+  depends_on = [module.amazon-mq-service, module.aws-rds]
+  for_each = toset([
+    for app in ["json_filter", "rabbit_to_db", "rabbit_to_slack", "rest_api"] : app
+    if var.ecs_create[local.env_name]
+  ])
   name                 = "${each.key}_service"
-  cluster              = aws_ecs_cluster.aws-ecs-cluster.id
+  cluster              = aws_ecs_cluster.aws-ecs-cluster[0].id
   task_definition      = "${aws_ecs_task_definition.applications["${each.key}"].family}:${max(aws_ecs_task_definition.applications["${each.key}"].revision, data.aws_ecs_task_definition.applications["${each.key}"].revision)}"
   launch_type          = "FARGATE"
   scheduling_strategy  = "REPLICA"
@@ -129,9 +148,10 @@ resource "aws_ecs_service" "applications" {
 ### frontend service ###
 resource "aws_ecs_service" "frontend" {
   depends_on           = [aws_ecs_service.applications["rest_api"]]
+  count                = var.ecs_create[local.env_name] ? 1 : 0
   name                 = "frontend_service"
-  cluster              = aws_ecs_cluster.aws-ecs-cluster.id
-  task_definition      = "${aws_ecs_task_definition.frontend.family}:${max(aws_ecs_task_definition.frontend.revision, data.aws_ecs_task_definition.frontend.revision)}"
+  cluster              = aws_ecs_cluster.aws-ecs-cluster[0].id
+  task_definition      = "${aws_ecs_task_definition.frontend[0].family}:${max(aws_ecs_task_definition.frontend[0].revision, data.aws_ecs_task_definition.frontend[0].revision)}"
   launch_type          = "FARGATE"
   scheduling_strategy  = "REPLICA"
   desired_count        = 1

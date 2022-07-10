@@ -80,6 +80,11 @@ variable "ec2_instances_create" {
   description = "Whether to create EC2s resources or not"
 }
 
+variable "ecs_create" {
+  type        = map(bool)
+  description = "Whether to create ECS resources or not"
+}
+
 ############ passwords ###########
 
 variable "random_password_length" {
