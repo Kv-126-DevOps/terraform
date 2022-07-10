@@ -52,8 +52,8 @@ resource "aws_ecs_task_definition" "applications" {
   network_mode             = "awsvpc"
   memory                   = "512"
   cpu                      = "256"
-  execution_role_arn       = aws_iam_role.ecsTaskExecutionRole.arn
-  task_role_arn            = aws_iam_role.ecsTaskExecutionRole.arn
+  execution_role_arn       = aws_iam_role.ecsTaskExecutionRole[0].arn
+  task_role_arn            = aws_iam_role.ecsTaskExecutionRole[0].arn
   tags                     = local.common_tags
 }
 
@@ -68,7 +68,6 @@ data "aws_ecs_task_definition" "applications" {
 
 ######## Get rest_api ECS service host ########
 data "aws_route53_zone" "selected" {
-  depends_on   = [aws_service_discovery_service.applications["rest_api"]]
   count        = var.ecs_create[local.env_name] ? 1 : 0
   name         = aws_service_discovery_private_dns_namespace.segment[0].name
   private_zone = true
@@ -107,8 +106,8 @@ resource "aws_ecs_task_definition" "frontend" {
   network_mode             = "awsvpc"
   memory                   = "512"
   cpu                      = "256"
-  execution_role_arn       = aws_iam_role.ecsTaskExecutionRole.arn
-  task_role_arn            = aws_iam_role.ecsTaskExecutionRole.arn
+  execution_role_arn       = aws_iam_role.ecsTaskExecutionRole[0].arn
+  task_role_arn            = aws_iam_role.ecsTaskExecutionRole[0].arn
 
   tags = local.common_tags
 }
@@ -122,7 +121,6 @@ data "aws_ecs_task_definition" "frontend" {
 ########## ECS Fargate Services ##########
 ### Applications service ###
 resource "aws_ecs_service" "applications" {
-  depends_on = [module.amazon-mq-service, module.aws-rds]
   for_each = toset([
     for app in ["json_filter", "rabbit_to_db", /*"rabbit_to_slack",*/ "rest_api"] : app
     if var.ecs_create[local.env_name]

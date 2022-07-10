@@ -140,5 +140,5 @@ variable "events" {
 variable "slack_url" {
   type        = string
   description = "Slack Url"
-  default     = "https://hooks.slack.com/services/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"
+  default     = "https://hooks.slack.com/services/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"
 }
