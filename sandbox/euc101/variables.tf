@@ -140,5 +140,5 @@ variable "events" {
 variable "slack_url" {
   type        = string
   description = "Slack Url"
-  default     = "Slack Url"
+  default     = "Slack_Url"
 }
