@@ -74,15 +74,17 @@ data "aws_route53_zone" "selected" {
 }
 
 ### Awaiting for rest_api service ###
-resource "time_sleep" "waiting_rest_api" {
+resource "null_resource" "wait_for_rest_api_deploy" {
   depends_on      = [aws_ecs_service.applications["rest_api"]]
-  count           = var.ecs_create[local.env_name] ? 1 : 0
-  create_duration = "60s"
+  count        = var.ecs_create[local.env_name] ? 1 : 0
+  provisioner "local-exec" {
+    command = "aws ecs wait services-stable --services ${aws_ecs_service.applications["rest_api"].name} --cluster ${aws_ecs_cluster.aws-ecs-cluster[0].name} --region ${var.region}"
+  }
 }
 
 ### Get ip of restapi ecs service ###
 data "external" "restapi_service" {
-  depends_on = [time_sleep.waiting_rest_api]
+  depends_on = [null_resource.wait_for_rest_api_deploy]
   count      = var.ecs_create[local.env_name] ? 1 : 0
   program    = ["bash", "./templates/scripts/get_service.sh"]
   query = {

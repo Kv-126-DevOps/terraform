@@ -21,15 +21,17 @@ resource "github_repository_webhook" "ec2" {
 
 ########## Create GitHub WebHook For ECS Fargate##########
 ### Awaiting for ECS services ###
-resource "time_sleep" "waiting_frontend" {
-  depends_on      = [aws_ecs_service.frontend]
-  count           = var.ecs_create[local.env_name] ? 1 : 0
-  create_duration = "10s"
+resource "null_resource" "wait_for_json_filter_deploy" {
+  depends_on      = [aws_ecs_service.applications["json_filter"]]
+  count        = var.ecs_create[local.env_name] ? 1 : 0
+  provisioner "local-exec" {
+    command = "aws ecs wait services-stable --services ${aws_ecs_service.applications["json_filter"].name} --cluster ${aws_ecs_cluster.aws-ecs-cluster[0].name} --region ${var.region}"
+  }
 }
 
 ### get public ip ecs service ###
 data "external" "json_ip" {
-  depends_on = [time_sleep.waiting_frontend]
+  depends_on = [null_resource.wait_for_json_filter_deploy]
   count      = var.ecs_create[local.env_name] ? 1 : 0
   program    = ["bash", "./templates/scripts/get_publicip.sh"]
   query = {
